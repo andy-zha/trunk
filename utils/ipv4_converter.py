@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import re
 
 def ip2digit(ip):
     #切割ip串
@@ -13,7 +14,7 @@ def ip2digit(ip):
 	count = 0
 	for value in l_value:
 	    #异常检测
-		if (3 < len(value)):
+		if 3 < len(value) or False == value.isdigit():
 			return 0
 		i_value += int(value) * power
 		power *= 2 ** 8
