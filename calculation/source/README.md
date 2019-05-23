@@ -1,8 +1,8 @@
 #编译
 ```
-rm -rf build
-mkdir build
-cd build 
+rm -rf bin
+mkdir bin
+cd bin 
 cmake -DCMAKE_BUILD_RPATH=/opt/shark ..
 make
 
