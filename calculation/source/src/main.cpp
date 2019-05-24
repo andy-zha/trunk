@@ -1,10 +1,8 @@
-#include "StrProc.h"
+#include "gtest/gtest.h"
 
-int main()
+GTEST_API_ int32_t main(int argc, char **argv)
 {
-    std::string strone = "abc";
-    std::string strtwo = "abe";
-    float t = StrProc::GetStrMatchDegree(strone, strtwo);
-    printf("%f\n", t);
-    return 0;
+    printf("Running main() from %s\n", __FILE__);
+    testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }

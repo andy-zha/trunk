@@ -19,10 +19,12 @@ aux_source_directory(gtest CALCULATION_TEST_FILES)
 include_directories(${PROJECT_SOURCE_DIR}/hdr)
 
 # 库文件目录
-link_directories(${CMAKE_BUILD_RPATH}/include)
+include_directories(${CMAKE_BUILD_RPATH}/include)
+link_directories(${CMAKE_BUILD_RPATH}/lib)
 
 # 编译选项
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # 指定生成目标
 add_executable(Calculation ${CALCULATION_SRC_FILES} ${CALCULATION_TEST_FILES})
+target_link_libraries(Calculation PRIVATE gtest)
