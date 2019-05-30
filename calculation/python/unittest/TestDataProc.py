@@ -18,8 +18,10 @@ class Test_DataProc(unittest.TestCase):
 
 	def test_getkappa(self):
 		data = DataProc()
-		Metrix = [[10, 2, 8], [5, 35, 5], [5, 2, 15]]
-		self.assertEqual(1.0010569427929712, data.GetKappa(Metrix))
+		Metrix = [[10, 5, 5], [2, 35, 2], [8, 5, 15]]
+		self.assertEqual(0.5170641447368421, data.GetKappa(Metrix))
 
-if __name__ == "__main__":
-	unittest.main()
+	def test_getarithmeticmean(self):
+		proc = DataProc()
+		Tuples = [[3,5],[4,6],[5,7],[6,8],[7,9]]
+		self.assertEqual(5.285714285714286,proc.GetAirthMeticMean(Tuples))

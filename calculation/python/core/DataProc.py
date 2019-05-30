@@ -38,6 +38,23 @@ class DataProc:
 
 		#计算po,pe与kappa
 		po = float(uDiagonalSum) / uSum
-		pe = float(uProductSum) / uSum * uSum
+		pe = float(uProductSum) / (uSum * uSum)
 		kappa = (po - pe) / (1 - pe)
 		return kappa
+
+	#计算算数平均值
+	def GetAirthMeticMean(self, Tuples):
+		TuplesLen = len(Tuples)
+		if 0 == TuplesLen:
+			return 0.0
+		
+		#计算所有项总和与所有项
+		Sum = 0.0
+		Total = 0
+		for Index in range(0, TuplesLen):
+			Sum += Tuples[Index][0] * Tuples[Index][1]
+			Total += Tuples[Index][1]
+
+		#返回平均值
+		mean = float(Sum) / Total
+		return mean
