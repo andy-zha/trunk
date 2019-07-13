@@ -1,0 +1,72 @@
+#ifndef _ETH2PARSER_H_
+#define _ETH2PARSER_H_
+
+#include <arpa/inet.h>
+#include "InputPacket.h"
+#include "ParserBase.h"
+#include "Protocol.h"
+
+namespace NS_ETH2PARSER
+{
+	//mac地址长度
+	const uint32_t MAC_LEN = 18;
+	//ip协议值
+	const uint16_t IP_PROTOCOL = 0x0800;
+	//以太层长度
+	const uint32_t ETH_LEN = 14;
+}
+
+class Eth2Parser : public ParserBase
+{
+	public:
+		/**
+		 * @brief 构造函数
+		 */
+		Eth2Parser();
+
+		/**
+		 * @brief 析构函数
+		 */
+		~Eth2Parser();
+
+		/**
+		 * @brief 重载 内存分配
+		 *
+		 * @prame size 内存大小
+		 *
+		 * @return 内存地址
+		 */
+		static void * operator new(size_t size)
+		{
+			void *p = (void*)_MEM_NEW_(size);
+			return p;
+		}
+
+		/**
+		 * @brief 重载 内存释放
+		 *
+		 * @prame p 释放地址
+		 */
+		static void operator delete(void *p)
+		{
+			_MEM_DEL_(p);
+		}
+
+		/**
+		 * @brief 初始化接口
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t Init();
+
+		/**
+		 * @brief 解析开始接口
+		 *
+		 * @prame InputPkt 包体
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t Start(InputPacket *&InputPkt);
+};
+
+#endif
