@@ -1,16 +1,20 @@
 #include "Eth2Parser.h"
 
+//构造函数
 Eth2Parser::Eth2Parser()
 {}
 
+//析构函数
 Eth2Parser::~Eth2Parser()
 {}
 
+//初始化接口
 int32_t Eth2Parser::Init()
 {
 	return RET::SUC;
 }
 
+//解析器入口
 int32_t Eth2Parser::Start(InputPacket *&InputPkt)
 {
 	//异常判断

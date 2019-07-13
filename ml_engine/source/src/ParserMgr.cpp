@@ -1,8 +1,10 @@
 #include "ParserMgr.h"
 
+//构造函数
 ParserMgr::ParserMgr()
 {}
 
+//析构函数
 ParserMgr::~ParserMgr()
 {}
 

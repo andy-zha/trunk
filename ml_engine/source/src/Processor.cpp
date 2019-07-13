@@ -1,12 +1,15 @@
 #include "Processor.h"
 #include "ParserMgr.h"
 
+//构造函数
 Processor::Processor()
 {}
 
+//析构函数
 Processor::~Processor()
 {}
 
+//初始化接口
 int32_t Processor::Init()
 {
 	//解析器管理器初始化
@@ -19,12 +22,14 @@ int32_t Processor::Init()
 	return RET::SUC;
 }
 
+//test
 void test(InputPacket *&pkt)
 {
 	std::cout<<"SrcMac: "<<pkt->SrcMac<<std::endl;
 	std::cout<<"DstMac: "<<pkt->DstMac<<std::endl;
 }
 
+//主处理接口
 void Processor::Process()
 {
 	while (true)
