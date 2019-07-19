@@ -4,6 +4,7 @@
 #include "MemoryDefine.h"
 #include "RetCodeDefine.h"
 #include "DbAdmin.h"
+#include "Timer.h"
 #include <vector>
 #include <list>
 #include <string>
@@ -120,13 +121,6 @@ namespace NS_IPDRULE
 	};
 }
 
-namespace QUERY
-{
-	const int32_t FAIL = -1;                                     //查询失败
-	const int32_t SUC = 0;                                       //查询成功
-	const int32_t DESTROY = 1;                                   //查询结果为已删除
-}
-
 class IPDRuleMgr
 {
 	public:
@@ -180,8 +174,10 @@ class IPDRuleMgr
 		 * @brief 处理接口
 		 */
 		void Process();
-	
+
+#ifndef _GTEST_	
 	private:
+#endif
 		/**
 		 * @brief 构造函数
 		 */
@@ -196,6 +192,36 @@ class IPDRuleMgr
 		 */
 		int32_t QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
+		/**
+		 * @brief 处理不学习url
+		 *
+		 * @prame pResult 查询结果; iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t ProcessNotLearnUrl(MYSQL_RES *pResult, std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
+		 * @brief 删除Url相关数据
+		 *
+		 * @prame BusinessId 业务Id; Url Url内容
+		 */
+		void DeleteUrlData(std::string BusinessId, std::string Url);
+
+		/**
+		 * @brief 删除Url表内Url记录
+		 *
+		 * @prame BusinessId 业务Id; SiteId 站点Id; UrlId UrlId 
+		 */
+		void DeleteUrl(std::string BusinessId, std::string SiteId, std::string UrlId);	
+
+		/**
+		 * @brief 删除Args表
+		 *
+		 * @prame BusinessId 业务Id; SiteId 站点Id; UrlId UrlId 
+		 */
+		void DropArgsTable(std::string BusinessId, std::string SiteId, std::string UrlId);	
+
 	private:
 		/**
 		 * @brief 业务链
@@ -206,6 +232,31 @@ class IPDRuleMgr
 		 * @brief 数据库操作对象
 		 */
 		DbAdmin m_DbAdmin;
+
+		/**
+ 		 * @brief 加载时间间隔
+ 		 */
+		uint32_t m_LoadThreshold;
+		
+		/**
+ 		 * @brief 数据库连接失败次数(日志信息) 
+ 		 */
+		uint32_t m_ConnectDbFailed;
+
+		/**
+ 		 * @brief 数据库去连接失败次数(日志信息)
+ 		 */
+		uint32_t m_CloseDbFailed;
+	
+		/**
+ 		 * @brief 执行数据库查询失败次数(日志信息)
+ 		 */
+		uint32_t m_ExecQueryFailed;
+
+		/**
+ 		 * @brief 上次活跃时间
+ 		 */
+		uint64_t m_LastActiveTime;
 };
 
 #endif

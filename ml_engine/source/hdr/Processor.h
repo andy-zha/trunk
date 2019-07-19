@@ -2,6 +2,8 @@
 #define _PROCESSOR_H
 
 #include "InputPacket.h"
+#include "IPDRuleMgr.h"
+#include "ParserMgr.h"
 
 class Processor
 {

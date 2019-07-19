@@ -1,5 +1,4 @@
 #include "Processor.h"
-#include "ParserMgr.h"
 
 //构造函数
 Processor::Processor()
@@ -34,6 +33,9 @@ void Processor::Process()
 {
 	while (true)
 	{
+		//加载业务规则
+		IPDRuleMgr::GetInstance().Process();
+
 		//构建包体
 		InputPacket *InputPkt = NULL;
 		try
