@@ -55,6 +55,7 @@ namespace NS_IPDRULE
 			}
 
 		public:
+			uint8_t m_LearnStatus;                               //站点学习状态
 			uint16_t m_SiteId;                                   //数据库站点id
 			uint16_t m_Port;                                     //站点port
 			uint64_t m_SiteKey;                                  //生成的站点键值
@@ -62,25 +63,23 @@ namespace NS_IPDRULE
 			std::string m_Domain;                                //站点域名
 	};
 
-	//业务结点
-	class BrSlot
+	class AutoDelete
 	{
 		public:
 			/**
 			 * @brief 构造函数
 			 */
-			BrSlot()
+			AutoDelete()
 			{
-				m_SiteKey = 0;
+				m_Flag = false;
 				m_Cycle = 0;
-				m_LearnStatus = -1;
-				m_Port = 0;
+				m_ReqNum = 0;
 			}
 
 			/**
 			 * @brief 析构函数
 			 */
-			~BrSlot()
+			~AutoDelete()
 			{}
 
 			/**
@@ -107,6 +106,75 @@ namespace NS_IPDRULE
 			}
 
 		public:
+			bool m_Flag;                          //是否允许自动删除
+			uint16_t m_Cycle;                     //执行自动删除的时间阈值
+			uint32_t m_ReqNum;                    //执行自动删除的访问阈值
+	};
+
+	//业务结点
+	class BrSlot
+	{
+		public:
+			/**
+			 * @brief 构造函数
+			 */
+			BrSlot()
+			{
+				m_SiteKey = 0;
+				m_Cycle = 0;
+				m_LearnStatus = -1;
+				m_Port = 0;
+				pthread_mutex_init(&_Mutex, NULL);
+			}
+
+			/**
+			 * @brief 析构函数
+			 */
+			~BrSlot()
+			{
+				pthread_mutex_destroy(&_Mutex);
+			}
+
+			/**
+			 * @brief 重载 内存分配
+			 *
+			 * @prame size 内存大小
+			 *
+			 * @return 内存地址
+			 */
+			static void * operator new(size_t size)
+			{
+				void *p = (void*)_MEM_NEW_(size);
+				return p;
+			}
+
+			/**
+			 * @brief 重载 内存释放
+			 *
+			 * @prame p 释放地址
+			 */
+			static void operator delete(void *p)
+			{
+				_MEM_DEL_(p);
+			}
+
+			/*
+			 * @brief 加锁
+			 */
+			void Lock()
+			{
+				pthread_mutex_lock(&_Mutex);
+			}
+
+			/*
+			 * @brief 去锁
+			 */
+			void UnLock()
+			{
+				pthread_mutex_unlock(&_Mutex);
+			}
+
+		public:
 			uint8_t m_SiteKey;									//站点键值
 			uint8_t m_Cycle;									//学习周期
 			int8_t m_LearnStatus;								//学习状态
@@ -114,10 +182,12 @@ namespace NS_IPDRULE
 			uint16_t m_Port;                                    //注册port
 			std::string m_Ip;                                   //注册ip
 			std::string m_Domain;                               //注册域名
+			NS_IPDRULE::AutoDelete m_AutoDelConfig;             //自动删除配置
 			std::list<std::string> m_TrustIpList;               //可信任ip列表
 			std::list<std::string> m_UnTrustIpList;             //不可信任ip列表
 			std::list<std::string> m_NotLearnUrlList;           //不学习url列表
-			std::vector<NS_IPDRULE::SiteSlot> m_SiteTable;		//站点表	
+			std::vector<NS_IPDRULE::SiteSlot> m_SiteTable;		//站点表
+			pthread_mutex_t _Mutex;                             //互斥锁
 	};
 }
 
@@ -193,6 +263,15 @@ class IPDRuleMgr
 		int32_t QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
 		/**
+		 * @brief 加载不学习Url
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
 		 * @brief 处理不学习url
 		 *
 		 * @prame pResult 查询结果; iter 当前业务槽
@@ -221,6 +300,76 @@ class IPDRuleMgr
 		 * @prame BusinessId 业务Id; SiteId 站点Id; UrlId UrlId 
 		 */
 		void DropArgsTable(std::string BusinessId, std::string SiteId, std::string UrlId);	
+
+		/**
+		 * @brief 注销业务
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t DestroyBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
+		 * @brief 加载信任ip
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
+		 * @brief 加载不信任ip
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
+		 * @brief 加载自动删除配置 
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t LoadAutoDeleteConfig(MYSQL_ROW row, std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
+		 * @brief 更新站点 
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t UpdateSite(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+
+		/**
+		 * @brief 处理自动删除 
+		 *
+		 * @prame iter 当前业务槽
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t ProcessAutoDelete();
+
+		/**
+		 * @brief 查询新业务 
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t QueryNewBusiness();
+
+		/**
+		 * @brief 注册业务  
+		 *
+		 * @prame row 业务信息
+		 * 
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t RegisterBusiness(MYSQL_ROW row);
 
 	private:
 		/**
