@@ -18,57 +18,43 @@ int32_t Processor::Init()
 		return RET::FAIL;
 	}
 
+	if (RET::SUC != _Parser.Init())
+	{
+		return RET::FAIL;
+	}
+
 	return RET::SUC;
 }
 
 //test
 void test(InputPacket *&pkt)
 {
-	std::cout<<"SrcMac: "<<pkt->SrcMac<<std::endl;
-	std::cout<<"DstMac: "<<pkt->DstMac<<std::endl;
+	std::cout<<"ClientPort: "<<pkt->m_ClientPort<<std::endl;
+	std::cout<<"ClientIp: "<<pkt->m_ClientIp<<std::endl;
 }
 
 //主处理接口
-void Processor::Process()
+void Processor::Process(InputPacket *pInputPkt)
 {
-	while (true)
+	//加载业务规则
+	IPDRuleMgr::GetInstance().Process();
+
+	if (NULL == pInputPkt)
 	{
-		//加载业务规则
-		IPDRuleMgr::GetInstance().Process();
+		return;
+	}
 
-		//构建包体
-		InputPacket *InputPkt = NULL;
-		try
-		{
-			InputPkt = new InputPacket();
-		}
-		catch(std::bad_alloc)
-		{
-			return;
-		}
-		
-		//循环解析
-		while (0 <= InputPkt->uPayload)
-		{
-			ParserBase *_Parser = ParserMgr::GetInstance().GetParser(InputPkt->uType);
-			if (NULL == _Parser)
-			{
-				break;
-			}
+	if (RET::SUC != _Parser.Start(pInputPkt))
+	{
+		m_ParserFailed++;
+	}
 
-			if (RET::SUC != _Parser->Start(InputPkt))
-			{
-				break;
-			}
-		}
+	test(pInputPkt);
 
-		test(InputPkt);
-
-		//释放包体内存
-		if (NULL != InputPkt)
-		{
-			delete InputPkt;
-			InputPkt = NULL;
-		}
+	//释放包体内存
+	if (NULL != pInputPkt)
+	{
+		delete pInputPkt;
+		pInputPkt = NULL;
 	}
 }

@@ -3,7 +3,7 @@
 
 #include "RetCodeDefine.h"
 #include "MemoryDefine.h"
-
+#define _READ_PACKET_
 class InputPacket
 {
 	public:
@@ -12,11 +12,15 @@ class InputPacket
 		 */
 		InputPacket()
 		{
+#ifdef _READ_PACKET_
 			pStr = NULL;
 			uLength = 0;
 			uPayload = 0;
 			uOffset = 0;
 			uType = 0;
+#endif
+			m_ClientPort = 0;
+			m_ServerPort = 0;
 		}
 
 		/**
@@ -51,13 +55,19 @@ class InputPacket
 		}
 
 	public:
-		char *pStr;                          //报文数据
-		uint32_t uLength;                    //报文长度
+#ifdef _READ_PACKET_ 
 		uint32_t uPayload;                   //负载长度
 		uint32_t uOffset;                    //偏移长度
 		uint32_t uType;                      //协议值
 		char SrcMac[18];                     //源mac地址
 		char DstMac[18];                     //宿mac地址
+#endif
+		char *pStr;                          //报文数据
+		uint32_t uLength;                    //报文长度
+		uint32_t m_ClientPort;               //源端口 	
+		uint32_t m_ServerPort;               //宿端口
+		std::string m_ClientIp;              //源ip
+		std::string m_ServerIp;              //宿ip
 };
 
 #endif

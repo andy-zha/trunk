@@ -396,10 +396,16 @@ int32_t IPDRuleMgr::ProcessAutoDelete()
 //查询新业务
 int32_t IPDRuleMgr::QueryNewBusiness()
 {
+	uint32_t uBusinessIdMax = 0;
+	if (0 < m_BusinessList.size())
+	{
+		uBusinessIdMax = m_BusinessList.end()->m_BusinessId;
+	}
+
 	//业务id比当前最大业务id大的进行注册
 	MYSQL_RES *pResult = NULL;
 	std::string Sql = "SELECT * FROM business WHERE b_id > " 
-			+ std::to_string(m_BusinessList.end()->m_BusinessId) + ";";
+			+ std::to_string(uBusinessIdMax) + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
 	{
 		m_ExecQueryFailed++;

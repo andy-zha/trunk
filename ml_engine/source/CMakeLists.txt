@@ -15,26 +15,28 @@ set (WAF_PATCH_VERSION 0)
 
 if (CMAKE_BUILD_RPATH AND (CMAKE_BUILD_TYPE MATCHES DEBUG)) 
 	add_definitions(-D_DEBUG_VERSION_)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -g -Werror") 
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -g -rdynamic") 
 endif()	
 
 if (CMAKE_BUILD_RPATH AND (CMAKE_BUILD_TYPE MATCHES RELEASE))
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -Werror")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
 endif()
 
 if (CMAKE_BUILD_RPATH AND (CMAKE_BUILD_TYPE MATCHES GTEST))
 	add_definitions(-D_GTEST_)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -g -Werror") 
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -g") 
 endif()
 
 # 目录下的所有源文件
 aux_source_directory(src ML_ENGINE_SRC_FILES)
+aux_source_directory(tools/memcheck ML_ENGINE_MEMCHECK_SRC_FILES)
 if (CMAKE_BUILD_TYPE MATCHES GTEST)
 	aux_source_directory(gtest ML_ENGINE_TEST_FILES)
 endif()	
 
 # 头文件目录
 include_directories(${PROJECT_SOURCE_DIR}/hdr)
+include_directories(${PROJECT_SOURCE_DIR}/tools/memcheck)
 
 # 库文件目录
 include_directories(${CMAKE_BUILD_RPATH}/include)
@@ -42,8 +44,9 @@ link_directories(${CMAKE_BUILD_RPATH}/lib)
 
 # 指定生成目标
 if (NOT (CMAKE_BUILD_TYPE MATCHES GTEST))
-	add_executable(ml_engine ${ML_ENGINE_SRC_FILES})
+	add_executable(ml_engine ${ML_ENGINE_SRC_FILES} ${ML_ENGINE_MEMCHECK_SRC_FILES})
 	target_link_libraries(ml_engine PRIVATE mysqlclient)
+	target_link_libraries(ml_engine PRIVATE http_parser)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES GTEST)

@@ -6,6 +6,10 @@
 #include <cstring>
 #include <assert.h>
 
+#define _MEMCHECK_
+
+#include "MemCheck.h"
+
 #define _MEM_NEW_(len) _MEM_SYS_::malloc(len)
 #define _MEM_DEL_(p) _MEM_SYS_::free(p)
 #define _MEM_CPY_(des, src, len) _MEM_SYS_::memcpy(des, src, len)
@@ -27,12 +31,19 @@ namespace _MEM_SYS_
 			throw std::bad_alloc();
 		}
 
+#ifdef _MEMCHECK_
+		MemCheck::GetInstance().New(buf);
+#endif
+
 		return buf;
 	}
 
 	//释放内存 
 	static inline void free (void *buf)
 	{
+#ifdef _MEMCHECK_
+		MemCheck::GetInstance().Delete(buf);
+#endif
 		delete [] (char*)buf;
 	}
 

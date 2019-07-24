@@ -1,4 +1,5 @@
 #include "Processor.h"
+#include "Acceptor.h"
 
 #ifdef _GTEST_
 #include "gtest/gtest.h"
@@ -7,7 +8,14 @@
 //主程序入口
 int32_t main(int32_t argc, char **argv)
 {
-#ifndef _GTEST_
+#ifndef _GTEST
+	//接收器初始化
+	if (RET::SUC != Acceptor::GetInstance().Init())
+	{
+		std::cout<<"Ml_Engine: Acceptor Init Failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
 	//主处理初始化
 	if (RET::SUC != Processor::GetInstance().Init())
 	{
@@ -15,7 +23,14 @@ int32_t main(int32_t argc, char **argv)
 		return RET::FAIL;
 	}
 
-	Processor::GetInstance().Process();
+	//接收器启动
+	if (RET::SUC != Acceptor::GetInstance().Start())
+	{
+		std::cout<<"Ml_Engine: Acceptor Start Failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//Processor::GetInstance().Process();
 	return RET::SUC;
 
 #else

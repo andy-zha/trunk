@@ -62,7 +62,7 @@ class HashSlot
 		 */
 		void UnLock()
 		{
-			pthread_mutex_unlock(_mutex);
+			pthread_mutex_unlock(&_mutex);
 		}
 
 	public:
@@ -77,6 +77,7 @@ class HashSlot
 		pthread_mutex_t _mutex;
 };
 
+template<typename Type>
 class HashTable
 {
 	public:
@@ -122,7 +123,7 @@ class HashTable
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t HashTableInit(uint32_t uNum, uHashSize[])
+		int32_t HashTableInit(uint32_t uNum, uint32_t uHashSize[])
 		{
 			try
 			{
@@ -157,9 +158,9 @@ class HashTable
 		 */
 		HashSlot<Type> *FindHashTableList(uint32_t uIndex)
 		{
-			if (NULL != HashSlot[uIndex])
+			if (NULL != _pSlot[uIndex])
 			{
-				return HashSlot[uIndex];
+				return _pSlot[uIndex];
 			}
 
 			return NULL;

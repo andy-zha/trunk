@@ -1,9 +1,13 @@
 #ifndef _PROCESSOR_H
 #define _PROCESSOR_H
 
-#include "InputPacket.h"
 #include "IPDRuleMgr.h"
+#include "HttpParser.h"
+
+#ifdef _READ_PACKET_
+#include "InputPacket.h"
 #include "ParserMgr.h"
+#endif
 
 class Processor
 {
@@ -67,13 +71,28 @@ class Processor
 		/**
 		 * @brief 处理函数
 		 */
-		void Process();
+		void Process(InputPacket *pInputPkt);
 
 	private:
 		/**
 		 * @brief 构造函数
 		 */
 		Processor();
+
+		/**
+		 * @brief http解析器
+		 */
+		HttpParser _Parser;
+
+		///**
+ 		// * @brief 主缓冲区
+ 		// */
+		//std::queue<InputPacket*> _Queue;
+		
+		/**
+		 * @brief 解析失败次数（日志信息)
+		 */
+		uint32_t m_ParserFailed;
 };
 
 #endif
