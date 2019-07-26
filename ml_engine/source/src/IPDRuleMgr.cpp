@@ -73,10 +73,10 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	LoadUnTrustIp(iter);
 
 	//加载学习周期、自动删除配置、业务学习状态
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT cycle, d_auto, d_time, d_num, learn_status FROM business \
 					   WHERE b_id = " + std::to_string(iter->m_BusinessId) + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || NULL == pResult)
+	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return RET::FAIL;
@@ -86,14 +86,14 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	{
 		DestroyBusiness(iter);
 		mysql_free_result(pResult);
-		pResult = NULL;
+		pResult = nullptr;
 	}
 
 	MYSQL_ROW row = mysql_fetch_row(pResult);
-	if (NULL != row)
+	if (nullptr != row)
 	{
 		//加载学习周期
-		if (NULL != row[0])
+		if (nullptr != row[0])
 		{
 			iter->m_Cycle = std::stoul(row[0]);
 		}
@@ -102,7 +102,7 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 		LoadAutoDeleteConfig(row, iter);
 		
 		//加载学习状态
-		if (NULL != row[4])
+		if (nullptr != row[4])
 		{
 			iter->m_LearnStatus = std::stoul(row[4]);
 		}
@@ -110,7 +110,7 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 
 	//内存释放
 	mysql_free_result(pResult);
-	pResult = NULL;
+	pResult = nullptr;
 
 	//更新站点状态
 	UpdateSite(iter);
@@ -122,7 +122,7 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 int32_t IPDRuleMgr::LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 	//读取不学习的url
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT url FROM not_learn_url WHERE b_id = " 
 		+ std::to_string(iter->m_BusinessId) + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
@@ -131,11 +131,11 @@ int32_t IPDRuleMgr::LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator it
 		return RET::FAIL;
 	}
 
-	if (NULL != pResult && 0 != mysql_num_rows(pResult))
+	if (nullptr != pResult && 0 != mysql_num_rows(pResult))
 	{
 		ProcessNotLearnUrl(pResult, iter);
 		mysql_free_result(pResult);
-		pResult = NULL;
+		pResult = nullptr;
 	}
 
 	return RET::SUC;
@@ -144,7 +144,7 @@ int32_t IPDRuleMgr::LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator it
 //处理不学习url
 int32_t IPDRuleMgr::ProcessNotLearnUrl(MYSQL_RES *pResult, std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
-	if (NULL == pResult)
+	if (nullptr == pResult)
 	{
 		return RET::FAIL;
 	}
@@ -153,7 +153,7 @@ int32_t IPDRuleMgr::ProcessNotLearnUrl(MYSQL_RES *pResult, std::vector<NS_IPDRUL
 	for (uint32_t uIndex = 0; uIndex < uTuples; uIndex++)
 	{
 		MYSQL_ROW row = mysql_fetch_row(pResult);
-		if (NULL != row && NULL != row[0])
+		if (nullptr != row && nullptr != row[0])
 		{
 			bool bFlag = false;
 			std::list<std::string>::iterator it = iter->m_NotLearnUrlList.begin();
@@ -187,9 +187,9 @@ void IPDRuleMgr::DeleteUrlData(std::string BusinessId, std::string Url)
 	}
 
 	//查询当前业务下所有站点
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT s_id FROM site_" + BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || NULL == pResult)
+	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return;	
@@ -199,36 +199,36 @@ void IPDRuleMgr::DeleteUrlData(std::string BusinessId, std::string Url)
 	for (uint32_t uIndex = 0; uIndex < uTuples; uIndex++)
 	{
 		MYSQL_ROW row = mysql_fetch_row(pResult);
-		if (NULL != row && NULL != row[0])
+		if (nullptr != row && nullptr != row[0])
 		{
 			//查询站点下UrlId
-			MYSQL_RES *pUrl = NULL;
+			MYSQL_RES *pUrl = nullptr;
 			Sql = "SELECT u_id FROM url_" + BusinessId + "_" + row[0]
 					+ " WHERE name = '" + Url + ";";
-			if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pUrl) || NULL == pUrl)
+			if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pUrl) || nullptr == pUrl)
 			{
 				m_ExecQueryFailed++;
 				continue;
 			}
 
 			MYSQL_ROW uid = mysql_fetch_row(pUrl);
-			if (NULL != uid && NULL != uid[0])
+			if (nullptr != uid && nullptr != uid[0])
 			{
 				//删除Url表内的Url记录及其相关联的args表
 				DropArgsTable(BusinessId, row[0], uid[0]);
 				DeleteUrl(BusinessId, row[0], uid[0]);
 				mysql_free_result(pUrl);
-				pUrl = NULL;
+				pUrl = nullptr;
 				break;
 			}
 			
 			mysql_free_result(pUrl);
-			pUrl = NULL;
+			pUrl = nullptr;
 		}
 	}
 
 	mysql_free_result(pResult);
-	pResult = NULL;	
+	pResult = nullptr;	
 	return;
 }
 
@@ -257,10 +257,10 @@ int32_t IPDRuleMgr::DestroyBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator it
 
 int32_t IPDRuleMgr::LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT ip FROM trustip WHERE b_id = " 
 			+ std::to_string(iter->m_BusinessId) + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || NULL == pResult)
+	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return RET::FAIL;
@@ -270,7 +270,7 @@ int32_t IPDRuleMgr::LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 	if (0 == uTuples)
 	{
 		mysql_free_result(pResult);
-		pResult = NULL;
+		pResult = nullptr;
 		return RET::SUC;
 	}
 
@@ -278,23 +278,23 @@ int32_t IPDRuleMgr::LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 	for (uint32_t uIndex = 0; uIndex < uTuples; uIndex++)
 	{
 		MYSQL_ROW row = mysql_fetch_row(pResult);
-		if (NULL != row && NULL != row[0])
+		if (nullptr != row && nullptr != row[0])
 		{
 			iter->m_TrustIpList.push_back(row[0]);
 		}
 	}
 
 	mysql_free_result(pResult);
-	pResult = NULL;
+	pResult = nullptr;
 	return RET::SUC;
 }
 
 int32_t IPDRuleMgr::LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT ip FROM untrustip WHERE b_id = " 
 			+ std::to_string(iter->m_BusinessId) + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || NULL == pResult)
+	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return RET::FAIL;
@@ -304,7 +304,7 @@ int32_t IPDRuleMgr::LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	if (0 == uTuples)
 	{
 		mysql_free_result(pResult);
-		pResult = NULL;
+		pResult = nullptr;
 		return RET::SUC;
 	}
 
@@ -312,36 +312,36 @@ int32_t IPDRuleMgr::LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	for (uint32_t uIndex = 0; uIndex < uTuples; uIndex++)
 	{
 		MYSQL_ROW row = mysql_fetch_row(pResult);
-		if (NULL != row && NULL != row[0])
+		if (nullptr != row && nullptr != row[0])
 		{
 			iter->m_TrustIpList.push_back(row[0]);
 		}
 	}
 
 	mysql_free_result(pResult);
-	pResult = NULL;
+	pResult = nullptr;
 	return RET::SUC;
 }
 
 int32_t IPDRuleMgr::LoadAutoDeleteConfig(MYSQL_ROW row, std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 	//异常判断
-	if (NULL == row)
+	if (nullptr == row)
 	{
 		return RET::FAIL;
 	}
 
-	if (NULL != row[1])
+	if (nullptr != row[1])
 	{
 		if (0 == std::stoul(row[0]))
 		{
 			iter->m_AutoDelConfig.m_Flag = true;
-			if (NULL != row[2])
+			if (nullptr != row[2])
 			{
 				iter->m_AutoDelConfig.m_Cycle = std::stoul(row[2]);
 			}
 
-			if (NULL != row[3])
+			if (nullptr != row[3])
 			{
 				iter->m_AutoDelConfig.m_ReqNum = std::stoul(row[3]);
 			}
@@ -361,10 +361,10 @@ int32_t IPDRuleMgr::UpdateSite(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 	for (; it != iter->m_SiteTable.end(); it++)
 	{
 		//查询站点状态
-		MYSQL_RES *pResult = NULL;
+		MYSQL_RES *pResult = nullptr;
 		std::string Sql = "SELECT learn_status FROM site_" + std::to_string(iter->m_BusinessId)
 				+ " WHERE s_id = " + std::to_string(it->m_SiteId) + ";";
-		if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || NULL == pResult)
+		if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 		{
 			m_ExecQueryFailed++;
 			continue;
@@ -373,7 +373,7 @@ int32_t IPDRuleMgr::UpdateSite(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 		if (0 != mysql_num_rows(pResult))
 		{
 			MYSQL_ROW row = mysql_fetch_row(pResult);
-			if (NULL != row[0])
+			if (nullptr != row[0])
 			{
 				it->m_LearnStatus = std::stoul(row[0]);
 			}
@@ -381,7 +381,7 @@ int32_t IPDRuleMgr::UpdateSite(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 		
 		//释放内存
 		mysql_free_result(pResult);
-		pResult = NULL;
+		pResult = nullptr;
 		
 		//处理自动删除
 		ProcessAutoDelete();
@@ -403,7 +403,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	}
 
 	//业务id比当前最大业务id大的进行注册
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT * FROM business WHERE b_id > " 
 			+ std::to_string(uBusinessIdMax) + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
@@ -416,7 +416,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	if (0 == uTuples)
 	{
 		mysql_free_result(pResult);
-		pResult = NULL;
+		pResult = nullptr;
 		return RET::SUC;
 	}
 
@@ -424,7 +424,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	for (uint32_t uIndex = 0; uIndex < uTuples; uIndex++)
 	{
 		MYSQL_ROW row = mysql_fetch_row(pResult);
-		if (NULL != row)
+		if (nullptr != row)
 		{
 			//注册业务
 			RegisterBusiness(row);
@@ -432,7 +432,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	}
 
 	mysql_free_result(pResult);
-	pResult = NULL;
+	pResult = nullptr;
 	return RET::SUC;
 }
 
@@ -440,7 +440,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 {
 	//异常判断
-	if (NULL == row)
+	if (nullptr == row)
 	{
 		return RET::FAIL;
 	}
@@ -449,12 +449,12 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 	NS_IPDRULE::BrSlot _Slot;
 
 	//业务id、业务ip、业务port、业务域名、站点key、学习周期均不能为null
-	if (NULL == row[NS_DBADMIN::EM_BUSINESS_ID] 
-					|| NULL == row[NS_DBADMIN::EM_BUSINESS_IP] 
-					|| NULL == row[NS_DBADMIN::EM_BUSINESS_PORT] 
-					|| NULL == row[NS_DBADMIN::EM_BUSINESS_DOMAIN] 
-					|| NULL == row[NS_DBADMIN::EM_BUSINESS_SITEKEY] 
-					|| NULL == row[NS_DBADMIN::EM_BUSINESS_CYCLE])
+	if (nullptr == row[NS_DBADMIN::EM_BUSINESS_ID] 
+					|| nullptr == row[NS_DBADMIN::EM_BUSINESS_IP] 
+					|| nullptr == row[NS_DBADMIN::EM_BUSINESS_PORT] 
+					|| nullptr == row[NS_DBADMIN::EM_BUSINESS_DOMAIN] 
+					|| nullptr == row[NS_DBADMIN::EM_BUSINESS_SITEKEY] 
+					|| nullptr == row[NS_DBADMIN::EM_BUSINESS_CYCLE])
 	{
 		return RET::FAIL;
 	}
@@ -466,17 +466,17 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 	_Slot.m_Cycle = std::stoul(row[NS_DBADMIN::EM_BUSINESS_CYCLE]); 
 
 	//读取自动删除配置
-	if (NULL != row[NS_DBADMIN::EM_BUSINESS_AUTODELETE])
+	if (nullptr != row[NS_DBADMIN::EM_BUSINESS_AUTODELETE])
 	{
 		if (0 == std::stoul(row[NS_DBADMIN::EM_BUSINESS_AUTODELETE]))
 		{
 			_Slot.m_AutoDelConfig.m_Flag = true;
-			if (NULL != row[NS_DBADMIN::EM_BUSINESS_AD_TIME])
+			if (nullptr != row[NS_DBADMIN::EM_BUSINESS_AD_TIME])
 			{
 				_Slot.m_AutoDelConfig.m_Cycle = std::stoul(row[NS_DBADMIN::EM_BUSINESS_AD_TIME]);
 			}
 
-			if (NULL != row[NS_DBADMIN::EM_BUSINESS_AD_REQNUM])
+			if (nullptr != row[NS_DBADMIN::EM_BUSINESS_AD_REQNUM])
 			{
 				_Slot.m_AutoDelConfig.m_ReqNum = std::stoul(row[NS_DBADMIN::EM_BUSINESS_AD_REQNUM]);
 			}
@@ -488,7 +488,7 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 	}
 
 	//读取业务学习状态
-	if (NULL != row[NS_DBADMIN::EM_BUSINESS_LEARNSTATUS])
+	if (nullptr != row[NS_DBADMIN::EM_BUSINESS_LEARNSTATUS])
 	{
 		_Slot.m_LearnStatus = std::stoul(row[NS_DBADMIN::EM_BUSINESS_LEARNSTATUS]);
 	}

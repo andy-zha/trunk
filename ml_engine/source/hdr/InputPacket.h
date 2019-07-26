@@ -13,12 +13,13 @@ class InputPacket
 		InputPacket()
 		{
 #ifdef _READ_PACKET_
-			pStr = NULL;
-			uLength = 0;
+			pStr = nullptr;
 			uPayload = 0;
 			uOffset = 0;
 			uType = 0;
 #endif
+			uLength = 0;
+			MinorVer = -1;
 			m_ClientPort = 0;
 			m_ServerPort = 0;
 		}
@@ -64,10 +65,14 @@ class InputPacket
 #endif
 		char *pStr;                          //报文数据
 		uint32_t uLength;                    //报文长度
+		int32_t MinorVer;                  //版本号 
 		uint32_t m_ClientPort;               //源端口 	
 		uint32_t m_ServerPort;               //宿端口
 		std::string m_ClientIp;              //源ip
 		std::string m_ServerIp;              //宿ip
+		std::string m_HttpMethod;            //请求方法
+		std::string m_Url;                   //Url
+		std::string m_Host;                  //域名
 };
 
 #endif

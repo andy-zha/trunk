@@ -21,7 +21,7 @@ TEST_F(TestDbAdmin, Test_DbAdmin)
 	std::string Sql = "CREATE TABLE test(t int);";
 	ASSERT_EQ(RET::SUC, m_DbAdmin.ExecSql(Sql));
 
-	MYSQL_RES *pResult = NULL;
+	MYSQL_RES *pResult = nullptr;
 	Sql = "SELECT * FROM test;";
 	ASSERT_EQ(RET::SUC, m_DbAdmin.ExecQuery(Sql, pResult));
 	

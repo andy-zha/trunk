@@ -2,8 +2,7 @@
 
 MemCheck::MemCheck()
 {
-	m_NewNodeFailed = 0;
-	m_FindNodeFailed = 0;
+	m_TranslationFailed = 0;
 }
 
 MemCheck::~MemCheck()
@@ -12,58 +11,47 @@ MemCheck::~MemCheck()
 //初始化接口
 int32_t MemCheck::Init()
 {
-	if (RET::SUC != m_HashTableOne.HashTableInit(NS_MEMCHECK::HASHSIZE)
-			|| RET::SUC != m_HashTableTwo.HashTableInit(NS_MEMCHECK::HASHSIZE))
-	{
-		return RET::FAIL;
-	}
-
 	return RET::SUC;
 }
 
 //内存分配
 void MemCheck::New(void *pAddr)
 {
+	if (nullptr == pAddr)
+	{
+		return;
+	}
+
 	void *buf[128];
 	int32_t size = backtrace(buf, 128);
-	uint32_t uHashKey = (uint64_t)pAddr / NS_MEMCHECK::HASHSIZE;
-	HashSlot<NS_MEMCHECK::st_BtNode> *pNode = m_HashTableOne.FindHashSlot(uHashKey);
-	if (NULL != pNode)
-	{
-		//上锁
-		pNode->Lock();
+	uint32_t uHashKey = (uint64_t)pAddr % NS_MEMCHECK::HASHSIZE;
+	std::map<uint32_t, NS_MEMCHECK::MemSlot>::iterator iter = m_AddrMapOne.find(uHashKey);
 
-		//遍历业务链，未找到相同地址则插入哈希结点
-		HDList<NS_MEMCHECK::st_BtNode> *pBtNode = NULL;
-		while (RET::SUC == pNode->m_Hash_List.ForwardTraver(pBtNode))
+	if (iter != m_AddrMapOne.end())
+	{
+		std::list<NS_MEMCHECK::MemNode>::iterator it = iter->second.m_Memlist.begin();
+		for(; it != iter->second.m_Memlist.end(); it++)
 		{
-			if (pBtNode->m_dlist_data.p == pAddr)
+			if (it->addr == pAddr)
 			{
-				//解锁
-				pNode->UnLock();
 				return;
 			}
 		}
-		
-		try
-		{
-			pBtNode = new HDList<NS_MEMCHECK::st_BtNode>;
-		}
-		catch(...)
-		{
-			m_NewNodeFailed++;
-			//解锁
-			pNode->UnLock();
-			return;
-		}
-		pBtNode->m_dlist_data.p = pAddr;
-		pBtNode->m_dlist_data.buf = buf;
-		pBtNode->m_dlist_data.size = size;
-		pNode->m_Hash_List.TailAddNode(pBtNode);
-
-		//解锁
-		pNode->UnLock();
+	
+		NS_MEMCHECK::MemNode Node;
+		Node.addr = pAddr;
+		Node.Buf = buf;
+		Node.size = size;
+		iter->second.m_Memlist.push_back(Node);
 	}
+
+	NS_MEMCHECK::MemSlot slot;
+	NS_MEMCHECK::MemNode mem;
+	mem.addr = pAddr;
+	mem.Buf = buf;
+	mem.size = size;
+	slot.m_Memlist.push_back(mem);
+	m_AddrMapOne[uHashKey] = slot;
 
 	return;
 }
@@ -71,31 +59,25 @@ void MemCheck::New(void *pAddr)
 //内存释放
 void MemCheck::Delete(void *pAddr)
 {
-	if (NULL == pAddr)
+	if (nullptr == pAddr)
 	{
 		return;
 	}
 
-	uint32_t uHashKey = (uint64_t)pAddr / NS_MEMCHECK::HASHSIZE;
-	HashSlot<NS_MEMCHECK::st_BtNode> *pNode = m_HashTableOne.FindHashSlot(uHashKey);
-	if (NULL != pNode)
-	{
-		//上锁
-		pNode->Lock();
+	uint32_t uHashKey = (uint64_t)pAddr % NS_MEMCHECK::HASHSIZE;
+	std::map<uint32_t, NS_MEMCHECK::MemSlot>::iterator iter = m_AddrMapOne.find(uHashKey);
 
-		//遍历业务链，找到相同地址则删除哈希结点
-		HDList<NS_MEMCHECK::st_BtNode> *pBtNode = NULL;
-		while (RET::SUC == pNode->m_Hash_List.ForwardTraver(pBtNode))
+	if (iter != m_AddrMapTwo.end())
+	{
+		std::list<NS_MEMCHECK::MemNode>::iterator it = iter->second.m_Memlist.begin();
+		for(; it != iter->second.m_Memlist.end(); it++)
 		{
-			if (pBtNode->m_dlist_data.p == pAddr)
+			if (it->addr == pAddr)
 			{
-				pNode->m_Hash_List.RemoveNode(pBtNode);
+				iter->second.m_Memlist.erase(it);
+				return;
 			}
 		}
-	
-		m_FindNodeFailed++;	
-		//解锁
-		pNode->UnLock();
 	}
 
 	return; 
@@ -104,8 +86,13 @@ void MemCheck::Delete(void *pAddr)
 //堆栈信息处理
 int32_t MemCheck::Translation(void *buf[1024], int32_t size, FILE *fd)
 {
+	if (nullptr == buf || nullptr == fd)
+	{
+		return RET::FAIL;
+	}	
+
 	char **trace = backtrace_symbols(buf, size);
-	if (NULL == trace)
+	if (nullptr == trace)
 	{
 		return RET::FAIL;
 	}
@@ -114,9 +101,9 @@ int32_t MemCheck::Translation(void *buf[1024], int32_t size, FILE *fd)
 	char *pName = new char [128];
 	for (int32_t iIndex = 0; iIndex < size; iIndex++)
 	{
-		char *pBegin = NULL;
-		char *pAdr = NULL;
-		char *pEnd = NULL;
+		char *pBegin = nullptr;
+		char *pAdr = nullptr;
+		char *pEnd = nullptr;
 		for (char *p = trace[iIndex]; *p; ++p)
 		{
 			if ('(' == *p)
@@ -169,7 +156,7 @@ int32_t MemCheck::Translation(void *buf[1024], int32_t size, FILE *fd)
 
 int32_t MemCheck::WriteLog()
 {
-	int32_t iValue = 0;
+	int32_t iValue = 1;
 
 	if (0 == iValue)
 	{
@@ -177,77 +164,59 @@ int32_t MemCheck::WriteLog()
 	}
 
 	char File[128];
-	time_t nowtime = time(NULL);
+	time_t nowtime = time(nullptr);
 	struct tm *local = localtime(&nowtime);
 	snprintf(File, 128, "MemCheck_%04d%02d%02d%2d%2d%2d_%d.log", local->tm_year + 1900,
 			local->tm_mon + 1, local->tm_mday, local->tm_hour, local->tm_min,
 			local->tm_sec, getpid());
 	FILE *fd = fopen(File, "a+");
-	if (NULL == fd)
+
+	if (nullptr == fd)
 	{
 		return RET::FAIL;
 	}	
 
 	uint32_t uTotal = 0;
-	for (uint32_t uIndex = 0; uIndex < NS_MEMCHECK::HASHSIZE; uIndex++)
+
+	std::map<uint32_t, NS_MEMCHECK::MemSlot>::iterator iter = m_AddrMapOne.begin();
+	for (; iter != m_AddrMapOne.end(); iter++)
 	{
-		HashSlot<NS_MEMCHECK::st_BtNode> *pNode = m_HashTableOne.FindHashSlot(uIndex);
-		if (NULL != pNode)
+		std::list<NS_MEMCHECK::MemNode>::iterator it = iter->second.m_Memlist.begin();
+		for (; it != iter->second.m_Memlist.end(); it++)
 		{
-			//上锁
-			pNode->Lock();
+			NS_MEMCHECK::MemNode Node;
+			Node.addr = it->addr;
+			Node.Buf = it->Buf;
+			Node.size = it->size; 
 			
-			if (0 == pNode->m_Hash_List.GetLen())
+			std::map<uint32_t, NS_MEMCHECK::MemSlot>::iterator i = m_AddrMapTwo.find(iter->first);
+			if (i != m_AddrMapTwo.end())
 			{
-				//解锁
-				pNode->UnLock();
+		 		i->second.m_Memlist.push_back(Node);
 				continue;
 			}
 
-			HashSlot<NS_MEMCHECK::st_BtNode> *pNodeTwo = m_HashTableTwo.FindHashSlot(uIndex);
-			pNodeTwo->Lock();
-
-			//遍历业务链，从哈希1挂到哈希2，为内存未释放的结点
-			HDList<NS_MEMCHECK::st_BtNode> *pBtNode = NULL;
-			while (RET::SUC == pNode->m_Hash_List.ForwardTraver(pBtNode))
-			{
-				pNode->m_Hash_List.PopNode(pBtNode);
-				pNodeTwo->m_Hash_List.TailAddNode(pBtNode);
-				uTotal++;
-			}
+			NS_MEMCHECK::MemSlot Slot;
+			Slot.m_Memlist.push_back(Node);
+			m_AddrMapOne[iter->first] = Slot;
 		
-			//去锁	
-			pNode->UnLock();
-			pNodeTwo->UnLock();
+			uTotal++;
 		}
 	}
 
-	//遍历哈希2，写日志
-	for (uint32_t u = 0; u < NS_MEMCHECK::HASHSIZE; u++)
+	std::map<uint32_t, NS_MEMCHECK::MemSlot>::iterator slot = m_AddrMapTwo.begin();
+	for (; slot != m_AddrMapTwo.end(); slot++)
 	{
-		HashSlot<NS_MEMCHECK::st_BtNode> *pHashNode = m_HashTableTwo.FindHashSlot(u);
-		if (NULL != pHashNode)
+		std::list<NS_MEMCHECK::MemNode>::iterator mem = slot->second.m_Memlist.begin();
+		for (; mem != slot->second.m_Memlist.end(); mem++)
 		{
-			pHashNode->Lock();
-
-			HDList<NS_MEMCHECK::st_BtNode> *pWrite = NULL;
-			while (RET::SUC == pHashNode->m_Hash_List.ForwardTraver(pWrite))
+			if (RET::SUC != Translation(mem->Buf, mem->size, fd))
 			{
-				if (RET::SUC != Translation(pWrite->m_dlist_data.buf, pWrite->m_dlist_data.size, fd))
-				{
-					for (uint32_t uIndex = 0; uIndex < pWrite->m_dlist_data.size; uIndex++)
-					{ 
-						//写栈信息
-						fwrite(pWrite->m_dlist_data.buf[uIndex], 
-										strlen((char*)pWrite->m_dlist_data.buf[uIndex]), 1, fd);
-					}
-				}
+				m_TranslationFailed++;
 			}
-
-			//解锁	
-			pHashNode->UnLock();
 		}
 	}
 
 	fclose(fd);
+	return RET::SUC;
 }

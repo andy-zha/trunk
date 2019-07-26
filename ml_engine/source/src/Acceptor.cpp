@@ -109,21 +109,30 @@ int32_t Acceptor::EpollInit()
 }
 
 //内存分配
-NS_ACCEPTOR::epoll_buf_p Acceptor::Alloc(int32_t fd)
+NS_ACCEPTOR::epoll_buf *Acceptor::Alloc(int32_t fd)
 {
-	size_t Len = sizeof(NS_ACCEPTOR::epoll_buf);
-	NS_ACCEPTOR::epoll_buf_p ret = NULL;
+	NS_ACCEPTOR::epoll_buf *ret = nullptr;
 	try
 	{
-		ret = (NS_ACCEPTOR::epoll_buf_p)_MEM_NEW_(Len);
+		ret = new NS_ACCEPTOR::epoll_buf();
 	}
 	catch(std::bad_alloc)
 	{
-		return NULL;
+		return nullptr;
 	}
+
 	ret->fd = fd;
 	return ret;
-} 
+}
+
+void Acceptor::Free(NS_ACCEPTOR::epoll_buf *ptr)
+{
+	if (nullptr != ptr)
+	{
+		delete ptr;
+		ptr = nullptr;
+	}
+}
 
 int32_t Acceptor::Start()
 {
@@ -134,12 +143,12 @@ int32_t Acceptor::Start()
 //线程处理函数
 void Acceptor::Accept()
 {
-	InputPacket *pInputPkt = NULL;
+	InputPacket *pInputPkt = nullptr;
 	while (m_Run)
 	{
 		try
 		{
-			if (NULL == pInputPkt)
+			if (nullptr == pInputPkt)
 			{
 				pInputPkt = new InputPacket();
 			}
@@ -150,8 +159,7 @@ void Acceptor::Accept()
 			return;
 		}
 
-		int32_t iRev = epoll_wait(m_Epfd, env, sizeof(env)/sizeof(env[0]), -1);
-		std::cout<<"Rev:"<<iRev<<std::endl;
+		int32_t iRev = epoll_wait(m_Epfd, env, 32, -1);
 		switch (iRev)
 		{
 			case 0:
@@ -164,7 +172,7 @@ void Acceptor::Accept()
 			{
 				for (int32_t Index = 0; Index < iRev; Index++)
 				{
-					NS_ACCEPTOR::epoll_buf_p buf = (NS_ACCEPTOR::epoll_buf_p)env[Index].data.ptr;
+					NS_ACCEPTOR::epoll_buf *buf = (NS_ACCEPTOR::epoll_buf*)env[Index].data.ptr;
 					if (buf->fd == m_Fd && env[Index].events & EPOLLIN)
 					{
 						struct sockaddr_in client;
@@ -174,6 +182,7 @@ void Acceptor::Accept()
 						{
 							SetNoBlock(sock);
 							ev.events = EPOLLIN|EPOLLET;
+							pEndfree = ev.data.ptr;
 							ev.data.ptr = Alloc(sock);
 							if (epoll_ctl(m_Epfd, EPOLL_CTL_ADD, sock, &ev) < 0)
 							{
@@ -183,10 +192,6 @@ void Acceptor::Accept()
 							
 							pInputPkt->m_ClientIp = inet_ntoa(client.sin_addr);
 							pInputPkt->m_ClientPort = ntohs(client.sin_port);
-
-							const char * pCliIp = inet_ntoa(client.sin_addr);
-							int32_t iCliPort = ntohs(client.sin_port);
-							std::cout<<"clientip:"<<pCliIp<<std::endl<<"clientport:"<<iCliPort<<std::endl;
 						}
 
 						if (0 > sock)
@@ -197,15 +202,19 @@ void Acceptor::Accept()
 					}
 					else if (env[Index].events & EPOLLIN)
 					{
-						std::cout<<"read"<<std::endl;
 						Read(buf, &env[Index], pInputPkt);
-						Processor::GetInstance().Process(pInputPkt);
-						pInputPkt = NULL;
+						//Processor::GetInstance().Process(pInputPkt);
+						if (nullptr != pInputPkt)
+						{
+							delete pInputPkt;
+							pInputPkt = nullptr;
+						}
 					}
 					else
 					{
 						Write(buf);
 					}
+
 				}//end for
 				break;
 			}
@@ -213,12 +222,13 @@ void Acceptor::Accept()
 	}//end while
 }
 
-void Acceptor::Read(NS_ACCEPTOR::epoll_buf_p buf, struct epoll_event *ev_arr, InputPacket *pInputPkt)
+//接收http请求
+void Acceptor::Read(NS_ACCEPTOR::epoll_buf *buf, struct epoll_event *ev_arr, InputPacket *pInputPkt)
 {
 	int32_t res = -1;
+	//读取http上行内容
 	if ((res = read(buf->fd, buf->Buf, NS_ACCEPTOR::ACCEPT_SIZE)) > 0)
 	{
-		//(buf->Buf)[res] = 0;
 		try
 		{
 			pInputPkt->pStr = (char*)_MEM_NEW_(res + 1);
@@ -236,7 +246,7 @@ void Acceptor::Read(NS_ACCEPTOR::epoll_buf_p buf, struct epoll_event *ev_arr, In
 	if (res == 0)
 	{
 		fflush(stdout);
-		if (epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, NULL) < 0)
+		if (epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, nullptr) < 0)
 		{
 			m_EpollCtlFailed++;
 			return;
@@ -260,12 +270,14 @@ void Acceptor::Read(NS_ACCEPTOR::epoll_buf_p buf, struct epoll_event *ev_arr, In
 	return;
 }
 
-void Acceptor::Write(NS_ACCEPTOR::epoll_buf_p buf)
+//给出http下行响应
+void Acceptor::Write(NS_ACCEPTOR::epoll_buf *buf)
 {
 	const char * temp ="HTTP/1.1 200 OK\r\n Content-Length :%s \r\n\r\n Hello world! ";
 	int ret= sprintf(buf->Buf, "%s", temp);
-	std::cout<<temp<<std::endl;
 	write(buf->fd, buf->Buf, ret);
-	epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, NULL);
+	epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, nullptr);
 	close(buf->fd);
+	Free((NS_ACCEPTOR::epoll_buf*)ev.data.ptr);
+	Free((NS_ACCEPTOR::epoll_buf*)pEndfree);
 }

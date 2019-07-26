@@ -2,20 +2,54 @@
 #define _MEMCHECK_H_
 
 #include "RetCodeDefine.h"
-#include "HashTableOneDime.h"
 #include <execinfo.h>
 #include <cxxabi.h>
 #include <unistd.h>
 #include <string.h>
+#include <map>
+#include <list>
 
 namespace NS_MEMCHECK
 {
-	typedef struct BtNode
+	class MemNode
 	{
-		void *p;                 //地址信息
-		void **buf;          //堆栈信息
-		int32_t size;            //堆栈层数
-	}st_BtNode;
+		public:
+			/**
+			 * @brief 构造函数
+			 */
+			MemNode()
+			{}
+
+			/**
+			 * @brief 析构函数
+			 */
+			~MemNode()
+			{}
+
+		public:
+			void *addr;              //地址信息
+			void **Buf;              //堆栈信息
+			int32_t size;            //堆栈层数
+	};
+
+	class MemSlot
+	{
+		public:
+			/**
+			 * @brief 构造函数
+			 */
+			MemSlot()
+			{}
+
+			/**
+			 * @brief 析构函数
+			 */
+			~MemSlot()
+			{}
+
+		public:
+			std::list<NS_MEMCHECK::MemNode> m_Memlist;
+	};
 
 	//哈希大小
 	static const uint32_t HASHSIZE = 17777;
@@ -87,22 +121,17 @@ class MemCheck
 		/**
  		 * @brief 哈希表1
  		 */
-		HashTableOneDime<NS_MEMCHECK::st_BtNode> m_HashTableOne;
+		std::map<uint32_t, NS_MEMCHECK::MemSlot> m_AddrMapOne;
 
 		/**
  		 * @brief 哈希表2
  		 */
-		HashTableOneDime<NS_MEMCHECK::st_BtNode> m_HashTableTwo;
+		std::map<uint32_t, NS_MEMCHECK::MemSlot> m_AddrMapTwo;
 
 		/**
-		 * @brief new结点失败次数
+		 * @brief 结点信息转换败次数
 		 */
-		uint32_t m_NewNodeFailed;
-
-		/**
-		 * @brief find结点失败次数
-		 */
-		uint32_t m_FindNodeFailed;
+		uint32_t m_TranslationFailed;
 };
 
 #endif

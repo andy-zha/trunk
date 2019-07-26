@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <dmalloc.h>
 
 namespace NS_ACCEPTOR
 {
@@ -27,9 +28,40 @@ namespace NS_ACCEPTOR
 	//epoll buf
 	typedef struct epoll_buf
 	{
-		int32_t fd;
-		char Buf[NS_ACCEPTOR::ACCEPT_SIZE];
-	}epoll_buf, *epoll_buf_p;
+		public:
+			epoll_buf()
+			{}
+
+			~epoll_buf()
+			{}
+
+			/**
+			 * @brief 重载 内存分配
+			 *
+			 * @prame size 内存大小
+			 *
+			 * @return 内存地址
+			 */
+			static void * operator new(size_t size)
+			{
+					void *p = (void*)_MEM_NEW_(size);
+					return p;
+			}
+
+			/**
+			 * @brief 重载 内存释放
+			 *
+			 * @prame p 释放地址
+			 */
+			static void operator delete(void *p)
+			{
+					_MEM_DEL_(p);
+			}
+
+		public:
+			int32_t fd;
+	 		char Buf[NS_ACCEPTOR::ACCEPT_SIZE];
+	}epoll_buf;
 }
 
 class Acceptor
@@ -130,7 +162,14 @@ class Acceptor
 		 *
 		 * @return 指针
 		 */
-		NS_ACCEPTOR::epoll_buf_p Alloc(int32_t fd);
+		NS_ACCEPTOR::epoll_buf *Alloc(int32_t fd);
+
+		/**
+		 * @brief 内存释放
+		 *
+		 * @return 指针
+		 */
+		void Free(NS_ACCEPTOR::epoll_buf *ptr);
 
 		/**
  		 * @brief 线程处理函数
@@ -142,14 +181,14 @@ class Acceptor
  		 *
  		 * @prame buf ev_arr
  		 */
-		void Read(NS_ACCEPTOR::epoll_buf_p buf, struct epoll_event *ev_arr, InputPacket *pInputPkt);
+		void Read(NS_ACCEPTOR::epoll_buf *buf, struct epoll_event *ev_arr, InputPacket *pInputPkt);
 
 		/**
  		 * @brief 响应
  		 *
  		 * @prame buf ev_arr
  		 */
-		void Write(NS_ACCEPTOR::epoll_buf_p buf);
+		void Write(NS_ACCEPTOR::epoll_buf *buf);
 
 	private:
 		/**
@@ -186,6 +225,11 @@ class Acceptor
 		 * @brief epoll事件数组
 		 */
 		struct epoll_event env[32];
+
+		/**
+		 * @brief 托管内存
+		 */
+		void *pEndfree;
 
 		/**
 		 * @brief epoll超时次数

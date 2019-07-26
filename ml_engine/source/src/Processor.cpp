@@ -26,20 +26,17 @@ int32_t Processor::Init()
 	return RET::SUC;
 }
 
-//test
-void test(InputPacket *&pkt)
-{
-	std::cout<<"ClientPort: "<<pkt->m_ClientPort<<std::endl;
-	std::cout<<"ClientIp: "<<pkt->m_ClientIp<<std::endl;
-}
-
 //主处理接口
 void Processor::Process(InputPacket *pInputPkt)
 {
 	//加载业务规则
 	IPDRuleMgr::GetInstance().Process();
 
-	if (NULL == pInputPkt)
+#ifdef _MEMCHECK_
+//	MemCheck::GetInstance().WriteLog();
+#endif	
+
+	if (nullptr == pInputPkt)
 	{
 		return;
 	}
@@ -49,12 +46,10 @@ void Processor::Process(InputPacket *pInputPkt)
 		m_ParserFailed++;
 	}
 
-	test(pInputPkt);
-
 	//释放包体内存
-	if (NULL != pInputPkt)
+	if (nullptr != pInputPkt)
 	{
 		delete pInputPkt;
-		pInputPkt = NULL;
+		pInputPkt = nullptr;
 	}
 }

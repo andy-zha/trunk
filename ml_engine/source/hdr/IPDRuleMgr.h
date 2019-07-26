@@ -124,7 +124,7 @@ namespace NS_IPDRULE
 				m_Cycle = 0;
 				m_LearnStatus = -1;
 				m_Port = 0;
-				pthread_mutex_init(&_Mutex, NULL);
+				pthread_mutex_init(&_Mutex, nullptr);
 			}
 
 			/**

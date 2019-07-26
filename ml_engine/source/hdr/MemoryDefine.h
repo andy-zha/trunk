@@ -8,10 +8,12 @@
 
 #define _MEMCHECK_
 
+#ifdef _MEMCHECK_
 #include "MemCheck.h"
+#endif
 
-#define _MEM_NEW_(len) _MEM_SYS_::malloc(len)
-#define _MEM_DEL_(p) _MEM_SYS_::free(p)
+#define _MEM_NEW_(len) _MEM_SYS_::mallo(len)
+#define _MEM_DEL_(p) _MEM_SYS_::fre(p)
 #define _MEM_CPY_(des, src, len) _MEM_SYS_::memcpy(des, src, len)
 #define _MEM_ZERO_(str, len, position) _MEM_SYS_::memzero(str, len, position)
 
@@ -19,7 +21,7 @@ namespace _MEM_SYS_
 {
 
     //分配内存
-	static inline void * malloc (size_t size)
+	static inline void * mallo (size_t size)
 	{
 		void *buf;
 		try
@@ -39,7 +41,7 @@ namespace _MEM_SYS_
 	}
 
 	//释放内存 
-	static inline void free (void *buf)
+	static inline void fre (void *buf)
 	{
 #ifdef _MEMCHECK_
 		MemCheck::GetInstance().Delete(buf);
@@ -51,19 +53,19 @@ namespace _MEM_SYS_
 	static inline void memcpy(void *dest, void *src, uint32_t ulen)
 	{
 #ifdef _DEBUG_
-		assert(NULL != dest);
-		assert(NULL != src);
+		assert(nullptr != dest);
+		assert(nullptr != src);
 #endif
 		while (ulen--)		
 		{
 			*(char*)dest = *(char*)src;
 			dest = (char*)dest + 1;
 #ifdef _DEBUG_
-			assert(NULL != dest);
+			assert(nullptr != dest);
 #endif
 			src = (char*)src + 1;
 #ifdef _DEBUG_
-			assert(NULL != src);
+			assert(nullptr != src);
 #endif
 		}
 	}
@@ -72,7 +74,7 @@ namespace _MEM_SYS_
 	static inline void memzero(char *str, uint32_t ulen, uint32_t position)
 	{
 #ifdef _DEBUG_
-		assert(NULL != str);
+		assert(nullptr != str);
 		assert(position < ulen);
 #endif
 		str[position] = '\0';
@@ -82,9 +84,9 @@ namespace _MEM_SYS_
 //释放指针
 static inline void free_ptr(char *p)
 {
-	if (NULL != p){
+	if (nullptr != p){
 		_MEM_DEL_(p);
-		p = NULL;
+		p = nullptr;
 	}	    
 }
 

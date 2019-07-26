@@ -18,7 +18,7 @@ int32_t Eth2Parser::Init()
 int32_t Eth2Parser::Start(InputPacket *&InputPkt)
 {
 	//异常判断
-	if (NULL == InputPkt->pStr || NS_ETH2PARSER::ETH_LEN >= InputPkt->uLength
+	if (nullptr == InputPkt->pStr || NS_ETH2PARSER::ETH_LEN >= InputPkt->uLength
 			|| InputPkt->uLength <= InputPkt->uOffset 
 			|| NS_ETH2PARSER::ETH_LEN >= InputPkt->uPayload)
 	{

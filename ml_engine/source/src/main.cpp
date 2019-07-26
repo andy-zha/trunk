@@ -30,7 +30,6 @@ int32_t main(int32_t argc, char **argv)
 		return RET::FAIL;
 	}
 
-	//Processor::GetInstance().Process();
 	return RET::SUC;
 
 #else

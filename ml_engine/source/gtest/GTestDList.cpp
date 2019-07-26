@@ -51,12 +51,12 @@ TEST_F(TestDList, Test_DList)
 	ASSERT_EQ(4, m_TestLists.GetLen());
 
 	//test ForwardTraver
-	DList<GTest> *pNode = NULL;
+	DList<GTest> *pNode = nullptr;
 	ASSERT_EQ(RET::SUC, m_TestLists.ForwardTraver(pNode));
 	ASSERT_EQ(1, pNode->m_dlist_data.iTest);
 
 	//test BackwardTraver
-	pNode = NULL;
+	pNode = nullptr;
 	ASSERT_EQ(RET::SUC, m_TestLists.BackwardTraver(pNode));
 	ASSERT_EQ(4, pNode->m_dlist_data.iTest);
 
@@ -64,7 +64,7 @@ TEST_F(TestDList, Test_DList)
 	ASSERT_EQ(RET::SUC, m_TestLists.PopNode(pNode));
 	ASSERT_EQ(3, m_TestLists.GetLen());
 	delete pNode;
-	pNode = NULL;
+	pNode = nullptr;
 
 	//test RemoveNode
 	ASSERT_EQ(RET::SUC, m_TestLists.BackwardTraver(pNode));

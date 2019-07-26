@@ -4,10 +4,19 @@
 #include "RetCodeDefine.h"
 #include "MemoryDefine.h"
 #include "InputPacket.h"
-#include <http_parser.h>
+#include "IPDRuleMgr.h"
+#include "Timer.h"
+#include "picohttpparser.h"
 
-namespace NS_HTTPPASER
+namespace NS_HTTPPARSER
 {
+	//host
+	static const std::string HOST = "Host";
+	//cookie
+	static const std::string COOKIE = "Cookie";
+	//Content-Type
+	static const std::string CONTENT_TYPE = "Content-Type";
+
 	//请求方法枚举
 	typedef enum HTTPMETHOD
 	{
@@ -90,51 +99,12 @@ class HttpParser
 
 	private:
 		/**
-		 * @brief url解析回调
+		 * @brief 解析uri
 		 *
-		 * @prame _parse 解析器; at 数据指针; uLength 数据长度
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
+		 * @prame uri; pInputPkt 包体 
 		 */
-		static int32_t OnUrl(http_parser *_parse, const char* at, size_t uLength);
+		void ParserUri(std::string uri, InputPacket *pInputPkt);
 
-		/**
-		 * @brief header解析回调(field)
-		 *
-		 * @prame _parse 解析器; at 数据指针; uLength 数据长度
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
-		 */
-		static int32_t OnHeaderField(http_parser *_parse, const char* at, size_t uLength);
-
-		/**
-		 * @brief header解析回调(value)
-		 *
-		 * @prame _parse 解析器; at 数据指针; uLength 数据长度
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
-		 */
-		static int32_t OnHeaderValue(http_parser *_parse, const char* at, size_t uLength);
-
-		/**
-		 * @brief body解析回调
-		 *
-		 * @prame _parse 解析器; at 数据指针; uLength 数据长度
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
-		 */
-		static int32_t OnBody(http_parser *_parse, const char* at, size_t uLength);
-
-	private:
-		/**
-		 * @brief http_parser
-		 */
-		http_parser _parser;
-
-		/**
-		 * @brief 解析器回调
-		 */
-		static http_parser_settings Settings;
 };
 
 #endif

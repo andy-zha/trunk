@@ -3,7 +3,7 @@
 //构造函数
 DbAdmin::DbAdmin()
 {
-	conn = NULL;
+	conn = nullptr;
 }
 
 //析构函数
@@ -15,9 +15,9 @@ int32_t DbAdmin::Connect()
 {
 	try
 	{
-		conn = mysql_init(NULL);
+		conn = mysql_init(nullptr);
 		if (!mysql_real_connect(conn, NS_DBADMIN::HOST, NS_DBADMIN::USER, 
-			NS_DBADMIN::PASSWD, NS_DBADMIN::DBNAME, 0, NULL, CLIENT_FOUND_ROWS))
+			NS_DBADMIN::PASSWD, NS_DBADMIN::DBNAME, 0, nullptr, CLIENT_FOUND_ROWS))
 		{
 			return RET::FAIL;
 		}
@@ -33,7 +33,7 @@ int32_t DbAdmin::Connect()
 //断开连接接口
 int32_t DbAdmin::Close()
 {
-	if (NULL == conn)
+	if (nullptr == conn)
 	{
 		return RET::SUC;
 	}
@@ -42,7 +42,7 @@ int32_t DbAdmin::Close()
 	{
 		mysql_close(conn);
 		mysql_library_end();
-		conn = NULL;
+		conn = nullptr;
 	}
 	catch(...)
 	{
@@ -53,9 +53,9 @@ int32_t DbAdmin::Close()
 }
 
 //执行查询语句接口
-int32_t DbAdmin::ExecQuery(std::string Sql, MYSQL_RES *pResult)
+int32_t DbAdmin::ExecQuery(std::string Sql, MYSQL_RES *&pResult)
 {
-	if (NULL == conn)
+	if (nullptr == conn)
 	{
 		return RET::FAIL;
 	}
@@ -79,7 +79,7 @@ int32_t DbAdmin::ExecQuery(std::string Sql, MYSQL_RES *pResult)
 //执行语句接口
 int32_t DbAdmin::ExecSql(std::string Sql)
 {
-	if (NULL == conn)
+	if (nullptr == conn)
 	{
 		return RET::FAIL;
 	}

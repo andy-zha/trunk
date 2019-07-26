@@ -15,7 +15,7 @@ class HashSlot
 		 */
 		HashSlot()
 		{
-			pthread_mutex_init(&_mutex, NULL);
+			pthread_mutex_init(&_mutex, nullptr);
 		}
 
 		/*
@@ -158,12 +158,12 @@ class HashTable
 		 */
 		HashSlot<Type> *FindHashTableList(uint32_t uIndex)
 		{
-			if (NULL != _pSlot[uIndex])
+			if (nullptr != _pSlot[uIndex])
 			{
 				return _pSlot[uIndex];
 			}
 
-			return NULL;
+			return nullptr;
 		}
 
 	public:

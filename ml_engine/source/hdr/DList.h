@@ -50,7 +50,7 @@ class DList
 		 */
 		int32_t PopNode(DList<Type> *pCurnode)
 		{
-			if (0 >= _dlist_len || NULL == pCurnode)
+			if (0 >= _dlist_len || nullptr == pCurnode)
 			{
 				return RET::FAIL;
 			}
@@ -69,7 +69,7 @@ class DList
 		 */
 		int32_t PrevAddNode(DList<Type> *pNewnode, DList<Type> *pCurnode)
 		{
-			if (0 > _dlist_len || NULL == pNewnode || NULL == pCurnode)
+			if (0 > _dlist_len || nullptr == pNewnode || nullptr == pCurnode)
 			{
 				return RET::FAIL;
 			}
@@ -88,7 +88,7 @@ class DList
 		 */
 		int32_t NextAddNode(DList<Type> *pNewnode, DList<Type> *pCurnode)
 		{
-			if (0 > _dlist_len || NULL == pNewnode || NULL == pCurnode)
+			if (0 > _dlist_len || nullptr == pNewnode || nullptr == pCurnode)
 			{
 				return RET::FAIL;
 			}
@@ -107,7 +107,7 @@ class DList
 		 */
 		int32_t HeadAddNode(DList<Type> *pNewnode)
 		{
-			if (NULL == pNewnode) 
+			if (nullptr == pNewnode) 
 			{
 				return RET::FAIL;
 			}
@@ -125,7 +125,7 @@ class DList
 		 */
 		int32_t TailAddNode(DList<Type> *pNewnode)
 		{
-			if (NULL == pNewnode){
+			if (nullptr == pNewnode){
 				return RET::FAIL;
 			}
 
@@ -142,7 +142,7 @@ class DList
 		 */
 		int32_t ForwardTraver(DList<Type> *&pCurnode)
 		{
-			if(NULL == pCurnode)
+			if(nullptr == pCurnode)
 			{
 				pCurnode = _dlist_next;
 			}
@@ -159,7 +159,7 @@ class DList
 		 */
 		int32_t BackwardTraver(DList<Type> *&pCurnode)
 		{
-			if(NULL == pCurnode)
+			if(nullptr == pCurnode)
 			{
 				pCurnode = _dlist_prev;
 			}
@@ -178,10 +178,10 @@ class DList
 		{
 			if (RET::SUC == PopNode(pCurnode))
 			{
-				if (NULL != pCurnode)
+				if (nullptr != pCurnode)
 				{
 					delete pCurnode;
-					pCurnode = NULL;
+					pCurnode = nullptr;
 				}
 				return RET::SUC;
 			}
@@ -194,18 +194,18 @@ class DList
 		 */
 		int32_t DestroyList()
 		{
-			DList<Type> *pNode = NULL;
+			DList<Type> *pNode = nullptr;
 			while (RET::SUC == ForwardTraver(pNode))
 			{
-				if (NULL != pNode && RET::SUC != PopNode(pNode))
+				if (nullptr != pNode && RET::SUC != PopNode(pNode))
 				{
 					return RET::FAIL;
 				}
 
-				if (NULL != pNode)
+				if (nullptr != pNode)
 				{
 					delete pNode;
-					pNode = NULL;
+					pNode = nullptr;
 				}
 			}
 

@@ -91,7 +91,7 @@ class DbAdmin
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ExecQuery(std::string Sql, MYSQL_RES *pResult);
+		int32_t ExecQuery(std::string Sql, MYSQL_RES *&pResult);
 
 		/**
 		 * @brief 执行接口

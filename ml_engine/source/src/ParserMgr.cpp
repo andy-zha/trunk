@@ -37,7 +37,7 @@ ParserBase *ParserMgr::GetParser(uint8_t uProType)
 	if (uProType >= NS_PROTOCOL::EM_PROTOCOL_END
 		|| uProType <= NS_PROTOCOL::EM_PROTOCOL_START)
 	{
-		return NULL;
+		return nullptr;
 	}	
 
 	return _Parser[uProType];
