@@ -105,6 +105,11 @@ class HttpParser
 		 */
 		void ParserUri(std::string uri, InputPacket *pInputPkt);
 
+	private:
+		/**
+		 * @brief 数据库操作对象
+		 */
+		DbAdmin db;
 };
 
 #endif

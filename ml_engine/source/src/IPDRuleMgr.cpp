@@ -23,6 +23,7 @@ int32_t IPDRuleMgr::Init()
 //主处理接口
 void IPDRuleMgr::Process()
 {
+	std::cout<<"3"<<std::endl;
 	uint64_t Nowtime = Timer::GetLocalTime();
 	//未到加载时间不加载
 	if (Nowtime - m_LastActiveTime < m_LoadThreshold)

@@ -1,0 +1,1 @@
+/usr/bin/c++   --std=c++11 -g -rdynamic -g   CMakeFiles/ml_console.dir/src/ConsoleMgr.cpp.o CMakeFiles/ml_console.dir/src/DbAdmin.cpp.o CMakeFiles/ml_console.dir/src/main.cpp.o  -o ml_console  -L/opt/ide/lib -Wl,-rpath,/opt/ide:/opt/ide/lib -lmysqlclient 

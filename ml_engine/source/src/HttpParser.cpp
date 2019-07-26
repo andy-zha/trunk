@@ -89,45 +89,46 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	//}
 
 	//数据库连接
-	//DbAdmin db;	
-	//if (RET::SUC != db.Connect())
-	//{
-	//	return RET::FAIL;
-	//}
-	////url状态查询
-	//MYSQL_RES *pResult = nullptr;
-	//uint64_t NowTime = Timer::GetLocalTime();	
-	//std::string Sql = "SELECT u_id, status FROM url_1_1 WHERE name = '" + pInputPkt->m_Url + "';";
-	//if (RET::SUC != db.ExecQuery(Sql, pResult) || nullptr == pResult)
-	//{
-	//	Sql = "INSERT INTO url_1_1(u_id, name, status, learn_process, learn_rate, hits, \
-	//			cycle_hits, readonly, lastactivetime, reliability) SELECT 0, '" 
-	//			+ pInputPkt->m_Url + "', 0, 1, 0, 0, 0, 0, " + std::to_string(NowTime) 
-	//			+ ", 0 FROM DUAL WHERE NOT EXISTS (SELECT name FROM url_1_1 WHERE name = '"
-	//			+ pInputPkt->m_Url + "');";
-	//	db.ExecSql(Sql);
-	//}
+	if (RET::SUC != db.Connect())
+	{
+		return RET::FAIL;
+	}
+	//url状态查询
+	MYSQL_RES *pResult = nullptr;
+	uint64_t NowTime = Timer::GetLocalTime();	
+	std::string Sql = "SELECT u_id, status FROM url_1_1 WHERE name = '" + pInputPkt->m_Url + "';";
+	if (RET::SUC != db.ExecQuery(Sql, pResult) || nullptr == pResult)
+	{
+		Sql = "INSERT INTO url_1_1(u_id, name, status, learn_process, learn_rate, hits, \
+				cycle_hits, readonly, lastactivetime, reliability) SELECT 0, '" 
+				+ pInputPkt->m_Url + "', 0, 1, 0, 0, 0, 0, " + std::to_string(NowTime) 
+				+ ", 0 FROM DUAL WHERE NOT EXISTS (SELECT name FROM url_1_1 WHERE name = '"
+				+ pInputPkt->m_Url + "');";
+		db.ExecSql(Sql);
+	}
 
-	//if (0 == mysql_num_rows(pResult))
-	//{
-	//	Sql = "INSERT INTO url_1_1(u_id, name, status, learn_process, learn_rate, hits, \
-	//			cycle_hits, readonly, lastactivetime, reliability) SELECT 0, '" 
-	//			+ pInputPkt->m_Url + "', 0, 1, 0, 0, 0, 0, " + std::to_string(NowTime) 
-	//			+ ", 0 FROM DUAL WHERE NOT EXISTS (SELECT name FROM url_1_1 WHERE name = '"
-	//			+ pInputPkt->m_Url + "');";
-	//	db.ExecSql(Sql);
-	//}
+	if (0 == mysql_num_rows(pResult))
+	{
+		Sql = "INSERT INTO url_1_1(u_id, name, status, learn_process, learn_rate, hits, \
+				cycle_hits, readonly, lastactivetime, reliability) SELECT 0, '" 
+				+ pInputPkt->m_Url + "', 0, 1, 0, 0, 0, 0, " + std::to_string(NowTime) 
+				+ ", 0 FROM DUAL WHERE NOT EXISTS (SELECT name FROM url_1_1 WHERE name = '"
+				+ pInputPkt->m_Url + "');";
+		db.ExecSql(Sql);
+	}
 
-	//MYSQL_ROW row = mysql_fetch_row(pResult);
-	//if (nullptr == row[0] || nullptr == row[1])
-	//{
-	//	return RET::FAIL;
-	//}
+	MYSQL_ROW row = mysql_fetch_row(pResult);
+	if (nullptr == row[0] || nullptr == row[1])
+	{
+		return RET::FAIL;
+	}
 
-	//Sql = "UPDATE url_1_1 SET hits = hits + 1, cycle_hits = cycle_hits + 1 WHERE name = '"
-	//		+ pInputPkt->m_Url + "';";
-	//db.ExecSql(Sql);
-	//db.Close();
+	Sql = "UPDATE url_1_1 SET hits = hits + 1, cycle_hits = cycle_hits + 1 WHERE name = '"
+			+ pInputPkt->m_Url + "';";
+	mysql_free_result(pResult);
+	pResult = nullptr;
+	db.ExecSql(Sql);
+	db.Close();
 	
 	return RET::SUC;
 }
