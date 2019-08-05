@@ -13,6 +13,12 @@ namespace
 	};
 }
 
+TEST_F(TestIPDRuleMgr, Test_Init)
+{
+	//test init
+	ASSERT_EQ(RET::SUC, IPDRuleMgr::GetInstance().Init());	
+}
+
 TEST_F(TestIPDRuleMgr, Test_IPDRuleMgr)
 {
 }

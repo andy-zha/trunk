@@ -1,0 +1,14 @@
+{
+	//处理模块
+	"PROCESSOR": {
+		//服务端ip
+		"SERVER_IP" : "192.168.125.131",
+		//业务端口
+		"SERVER_PORT" : 8080
+	},
+	//规则模块
+	"IPDRULEMGR": {
+		//站点最大阈值
+		"SITE_MAX_NUM" : 128
+	}
+}

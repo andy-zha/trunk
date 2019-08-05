@@ -24,8 +24,21 @@ int32_t Processor::Init()
 		return RET::FAIL;
 	}
 
-	m_ServerIp = "192.168.125.130";
-	m_ServerPort = 8080;
+	//读取服务端ip
+	if (RET::SUC != Config::GetCfg(NS_CONFIG::EM_CFGID_SERVER_IP, m_ServerIp))
+	{
+		std::cout<<"Processor: Read Server Ip Failed!"<<std::endl;
+		return RET::FAIL;	
+	}
+
+	//读取服务端port
+	int32_t iValue = -1;
+	if (RET::SUC != Config::GetCfg(NS_CONFIG::EM_CFGID_SERVER_PORT, iValue))
+	{
+		std::cout<<"Processor: Read Server Port Failed!"<<std::endl;
+		return RET::FAIL;	
+	}
+	m_ServerPort = iValue;
 
 	//初始化套接字
 	if (RET::SUC != SocketInit())
@@ -300,7 +313,6 @@ void Processor::MemCheck()
 {
 	DbAdmin m_db;
 	m_db.Connect();
-	std::cout<<"2"<<std::endl;
 	
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT memcheck FROM cmd;";

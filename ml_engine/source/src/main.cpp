@@ -7,7 +7,7 @@
 //主程序入口
 int32_t main(int32_t argc, char **argv)
 {
-#ifndef _GTEST
+#ifndef _GTEST_
 	//主处理初始化
 	if (RET::SUC != Processor::GetInstance().Init())
 	{

@@ -5,6 +5,7 @@
 #include "MemoryDefine.h"
 #include "InputPacket.h"
 #include "HttpParser.h"
+#include "Config.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -212,7 +213,7 @@ class Processor
 		/**
  		 * @brief 服务端Port
  		 */
-		uint16_t m_ServerPort;
+		uint32_t m_ServerPort;
 
 		/**
  	     * @brief 服务端Ip

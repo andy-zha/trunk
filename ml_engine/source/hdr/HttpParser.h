@@ -7,6 +7,7 @@
 #include "IPDRuleMgr.h"
 #include "Timer.h"
 #include "picohttpparser.h"
+#include "StrProc.h"
 
 namespace NS_HTTPPARSER
 {
@@ -104,6 +105,20 @@ class HttpParser
 		 * @prame uri; pInputPkt 包体 
 		 */
 		void ParserUri(std::string uri, InputPacket *pInputPkt);
+
+		/**
+		 * @brief 解析cookie
+		 *
+		 * @prame cookie
+		 */
+		void ParserCookie(std::string cookie);
+
+		/**
+		 * @brief 解析http body
+		 *
+		 * @prame http_body http请求体
+		 */
+		void ParserBody(std::string http_body);
 
 	private:
 		/**

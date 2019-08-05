@@ -56,21 +56,22 @@ if (CMAKE_BUILD_TYPE MATCHES DEBUG)
 					${ML_ENGINE_MEMCHECK_SRC_FILES}
 					${ML_ENGINE_HTTPPARSER_SRC_FILES}
 					${ML_ENGINE_CONSOLE_SRC_FILES})
-	target_link_libraries(ml_engine PRIVATE pthread)
 	target_link_libraries(ml_engine PRIVATE mysqlclient)
-	target_link_libraries(ml_engine PRIVATE http_parser)
+	target_link_libraries(ml_engine PRIVATE yajl)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES RELEASE)
 	add_executable(ml_engine ${ML_ENGINE_SRC_FILES}
 					${ML_ENGINE_HTTPPARSER_SRC_FILES})
-	target_link_libraries(ml_engine PRIVATE pthread)
 	target_link_libraries(ml_engine PRIVATE mysqlclient)
-	target_link_libraries(ml_engine PRIVATE http_parser)
+	target_link_libraries(ml_engine PRIVATE yajl)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES GTEST)
-	add_executable(ml_gtest ${ML_ENGINE_SRC_FILES} ${ML_ENGINE_TEST_FILES})
+	add_executable(ml_gtest ${ML_ENGINE_SRC_FILES} 
+					${ML_ENGINE_HTTPPARSER_SRC_FILES}
+					${ML_ENGINE_TEST_FILES})
 	target_link_libraries(ml_gtest PRIVATE gtest)
 	target_link_libraries(ml_gtest PRIVATE mysqlclient)
+	target_link_libraries(ml_gtest PRIVATE yajl)
 endif()

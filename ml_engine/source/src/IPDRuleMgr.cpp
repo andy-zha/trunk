@@ -3,6 +3,7 @@
 //构造函数
 IPDRuleMgr::IPDRuleMgr()
 {
+	m_SiteNumMax = 0;
 	m_LoadThreshold = 0;
 	m_ConnectDbFailed = 0;
 	m_CloseDbFailed = 0;
@@ -17,13 +18,21 @@ IPDRuleMgr::~IPDRuleMgr()
 //初始化接口
 int32_t IPDRuleMgr::Init()
 {
+	//读取站点最大值
+	int32_t iValue = -1;
+	if (RET::SUC != Config::GetCfg(NS_CONFIG::EM_CFGID_SITE_MAX_NUM, iValue))
+	{
+		std::cout<<"IPDRuleMgr: Read site max failed!"<<std::endl;
+		return RET::FAIL;
+	}
+	m_SiteNumMax = iValue;
+
 	return RET::SUC;
 }
 
 //主处理接口
 void IPDRuleMgr::Process()
 {
-	std::cout<<"3"<<std::endl;
 	uint64_t Nowtime = Timer::GetLocalTime();
 	//未到加载时间不加载
 	if (Nowtime - m_LastActiveTime < m_LoadThreshold)
@@ -42,14 +51,8 @@ void IPDRuleMgr::Process()
 	std::vector<NS_IPDRULE::BrSlot>::iterator iter = m_BusinessList.begin();
 	for (; iter != m_BusinessList.end(); iter++)
 	{
-		//上锁
-		iter->Lock();
-
 		//查询业务
 		QueryBusiness(iter);
-
-		//去锁
-		iter->UnLock();
 	}
 
 	//查询新业务
@@ -76,7 +79,7 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	//加载学习周期、自动删除配置、业务学习状态
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT cycle, d_auto, d_time, d_num, learn_status FROM business \
-					   WHERE b_id = " + std::to_string(iter->m_BusinessId) + ";";
+					   WHERE b_id = " + iter->m_BusinessId + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
@@ -125,7 +128,7 @@ int32_t IPDRuleMgr::LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator it
 	//读取不学习的url
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT url FROM not_learn_url WHERE b_id = " 
-		+ std::to_string(iter->m_BusinessId) + ";";
+		+ iter->m_BusinessId + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
 	{
 		m_ExecQueryFailed++;
@@ -171,7 +174,7 @@ int32_t IPDRuleMgr::ProcessNotLearnUrl(MYSQL_RES *pResult, std::vector<NS_IPDRUL
 			if (!bFlag)
 			{
 				iter->m_NotLearnUrlList.push_back(row[0]);
-				DeleteUrlData(std::to_string(iter->m_BusinessId), row[0]);
+				DeleteUrlData(iter->m_BusinessId, row[0]);
 			}
 		}
 	}
@@ -259,8 +262,7 @@ int32_t IPDRuleMgr::DestroyBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator it
 int32_t IPDRuleMgr::LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 	MYSQL_RES *pResult = nullptr;
-	std::string Sql = "SELECT ip FROM trustip WHERE b_id = " 
-			+ std::to_string(iter->m_BusinessId) + ";";
+	std::string Sql = "SELECT ip FROM trustip WHERE b_id = " + iter->m_BusinessId + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
@@ -294,7 +296,7 @@ int32_t IPDRuleMgr::LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 {
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT ip FROM untrustip WHERE b_id = " 
-			+ std::to_string(iter->m_BusinessId) + ";";
+			+ iter->m_BusinessId + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
@@ -363,8 +365,8 @@ int32_t IPDRuleMgr::UpdateSite(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 	{
 		//查询站点状态
 		MYSQL_RES *pResult = nullptr;
-		std::string Sql = "SELECT learn_status FROM site_" + std::to_string(iter->m_BusinessId)
-				+ " WHERE s_id = " + std::to_string(it->m_SiteId) + ";";
+		std::string Sql = "SELECT learn_status FROM site_" + iter->m_BusinessId
+				+ " WHERE s_id = " + it->m_SiteId + ";";
 		if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 		{
 			m_ExecQueryFailed++;
@@ -397,16 +399,16 @@ int32_t IPDRuleMgr::ProcessAutoDelete()
 //查询新业务
 int32_t IPDRuleMgr::QueryNewBusiness()
 {
-	uint32_t uBusinessIdMax = 0;
+	std::string BusinessIdMax;
 	if (0 < m_BusinessList.size())
 	{
-		uBusinessIdMax = m_BusinessList.end()->m_BusinessId;
+		BusinessIdMax = m_BusinessList.end()->m_BusinessId;
 	}
 
 	//业务id比当前最大业务id大的进行注册
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT * FROM business WHERE b_id > " 
-			+ std::to_string(uBusinessIdMax) + ";";
+			+ BusinessIdMax + ";";
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
 	{
 		m_ExecQueryFailed++;
@@ -459,7 +461,7 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 	{
 		return RET::FAIL;
 	}
-	_Slot.m_BusinessId = std::stoul(row[NS_DBADMIN::EM_BUSINESS_ID]);
+	_Slot.m_BusinessId = row[NS_DBADMIN::EM_BUSINESS_ID];
 	_Slot.m_Ip = row[NS_DBADMIN::EM_BUSINESS_IP];
 	_Slot.m_Port = std::stoul(row[NS_DBADMIN::EM_BUSINESS_PORT]);
 	_Slot.m_Domain = std::stoul(row[NS_DBADMIN::EM_BUSINESS_DOMAIN]);
@@ -497,4 +499,219 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 	//插入业务结点
 	m_BusinessList.push_back(_Slot);
 	return RET::SUC;
+}
+
+//规则匹配
+int32_t IPDRuleMgr::MatchRules(InputPacket *&pInputPkt)
+{
+	//异常判断
+	if (nullptr == pInputPkt)
+	{
+		return RET::FAIL;
+	}
+
+	//业务匹配
+	std::vector<NS_IPDRULE::BrSlot>::iterator iter;
+	if (RET::SUC != MatchBusiness(pInputPkt, iter))
+	{
+		return RET::FAIL;
+	}
+
+	//站点匹配
+	if (RET::SUC != MatchSite(pInputPkt, iter))
+	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+//匹配业务
+int32_t IPDRuleMgr::MatchBusiness(InputPacket *&pInputPkt,
+				std::vector<NS_IPDRULE::BrSlot>::iterator &iterswap)
+{
+	if (nullptr == pInputPkt)
+	{
+		return RET::FAIL;
+	}
+
+	float fDegree = 0.0;
+	std::string BusinessId;
+	std::vector<NS_IPDRULE::BrSlot>::iterator iter = m_BusinessList.begin();
+	for (; iter != m_BusinessList.end(); iter++)
+	{
+		//匹配业务且业务学习状态不能为学习暂停
+		if (RET::SUC == CompareBusiness(pInputPkt, iter) 
+						&& 0 != iter->m_LearnStatus)
+		{
+			if (fDegree < iter->m_Degree)
+			{
+				BusinessId = iter->m_BusinessId;
+				fDegree = iter->m_Degree;
+				iterswap = iter;
+			}
+		}
+	}
+
+	//无匹配业务则失败
+	if (0.0 == fDegree || RET::SUC == CompareConfig(pInputPkt, iterswap))
+	{
+		return RET::FAIL;
+	}
+
+	pInputPkt->m_BusinessId = BusinessId;
+	return RET::SUC;
+}
+
+//匹配业务信息
+int32_t IPDRuleMgr::CompareBusiness(InputPacket *&pInputPkt,
+				std::vector<NS_IPDRULE::BrSlot>::iterator iter)
+{
+	//异常判断
+	if (nullptr == pInputPkt)
+	{
+		return RET::FAIL;
+	}
+
+	//比较ip/port/domain
+	if ((0 != iter->m_Ip.size() && iter->m_Ip == pInputPkt->m_ServerIp)
+			|| (0 != iter->m_Port && iter->m_Port == pInputPkt->m_ServerPort)
+			|| (0 != iter->m_Domain.size() && iter->m_Domain == pInputPkt->m_Host)) 
+	{
+		return RET::SUC;
+	}
+
+	return RET::FAIL;
+}
+
+//匹配业务内非信任ip及不学习url配置
+int32_t IPDRuleMgr::CompareConfig(InputPacket *&pInputPkt, 
+				std::vector<NS_IPDRULE::BrSlot>::iterator iter)
+{
+	//异常检测
+	if (nullptr == pInputPkt)
+	{
+		return RET::FAIL;
+	}
+
+	//匹配不信任ip
+	std::list<std::string>::iterator IpIter = iter->m_UnTrustIpList.begin();
+	for (; IpIter != iter->m_UnTrustIpList.end(); IpIter++)
+	{
+		if (pInputPkt->m_ClientIp == *IpIter)
+		{
+			return RET::SUC;
+		}
+	}
+
+	//匹配不学习url
+	std::list<std::string>::iterator UrlIter = iter->m_NotLearnUrlList.begin();
+	for (; UrlIter != iter->m_NotLearnUrlList.end(); UrlIter++)
+	{
+		if (pInputPkt->m_Url == *UrlIter)
+		{
+			return RET::SUC;
+		}
+	}
+
+	return RET::FAIL;
+}
+
+int32_t IPDRuleMgr::MatchSite(InputPacket *&pInputPkt,
+				std::vector<NS_IPDRULE::BrSlot>::iterator iter)
+{
+	//异常判断
+	if (nullptr == pInputPkt)
+	{
+		return RET::FAIL;
+	}
+
+	//本进程内存中已存在站点匹配
+	std::vector<NS_IPDRULE::SiteSlot>::iterator SiteIter = iter->m_SiteTable.begin();
+	for (; SiteIter != iter->m_SiteTable.end(); SiteIter++)
+	{
+		//站点信息匹配及站点学习状态不为学习暂停
+		if (RET::SUC == CompareSite(pInputPkt, SiteIter)
+						&& 0 != SiteIter->m_LearnStatus)
+		{
+			pInputPkt->m_SiteId = SiteIter->m_SiteId;
+			return RET::SUC;
+		}
+	}
+
+	//查询数据库站点数是否达到最大数
+	if (RET::SUC != m_DbAdmin.Connect())
+	{
+		m_ConnectDbFailed++;
+		return RET::FAIL;
+	}
+
+	//查询当前业务总站点数
+	MYSQL_RES *pResult = nullptr;
+	std::string Sql = "SELECT COUNT(*) FROM site_" + iter->m_BusinessId + ";";
+	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+	{
+		m_ExecQueryFailed++;
+		m_DbAdmin.Close();
+		return RET::FAIL;
+	}
+
+	if (0 != mysql_num_rows(pResult))
+	{
+		MYSQL_ROW row = mysql_fetch_row(pResult);
+		//站点数超过了最大数不增加新站点
+		if (std::stoul(row[0]) >= m_SiteNumMax)
+		{
+			mysql_free_result(pResult);
+			pResult = nullptr;
+			m_DbAdmin.Close();
+			return RET::FAIL;
+		}
+
+		//创建新站点
+		mysql_free_result(pResult);
+		pResult = nullptr;
+		CreateNewSite(pInputPkt, iter);
+		m_DbAdmin.Close();
+		return RET::SUC;
+	}
+
+	mysql_free_result(pResult);
+	pResult = nullptr;
+	m_DbAdmin.Close();
+	return RET::FAIL;
+}
+
+//比较站点信息
+int32_t IPDRuleMgr::CompareSite(InputPacket *&pInputPkt,
+				std::vector<NS_IPDRULE::SiteSlot>::iterator iter)
+{
+	//异常判断
+	if (nullptr == pInputPkt)
+	{
+		return RET::FAIL;
+	}
+
+	//比较站点信息
+	if ((0 != iter->m_Ip.size() && pInputPkt->m_ServerIp == iter->m_Ip)
+			|| (0 != iter->m_Port && pInputPkt->m_ServerPort == iter->m_Port)
+			|| (0 != iter->m_Domain.size() && pInputPkt->m_Host == iter->m_Domain))
+	{
+		return RET::SUC;
+	}
+
+	return RET::FAIL;
+}
+
+void IPDRuleMgr::CreateNewSite(InputPacket *&pInputPkt,
+				std::vector<NS_IPDRULE::BrSlot>::iterator iter)
+{
+	if (nullptr == pInputPkt)
+	{
+		return;
+	}
+
+	std::string Sql = "INSERT INTO site_" + iter->m_BusinessId + "(s_id int, dip text, \
+					   d_port int, host text, hits int, learnstatus int, \
+					   checkstatus int) SELECT 0, ";
 }

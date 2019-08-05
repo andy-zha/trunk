@@ -1,5 +1,4 @@
 #include "HttpParser.h"
-#include "DbAdmin.h"
 
 //构造函数
 HttpParser::HttpParser()
@@ -15,6 +14,7 @@ int32_t HttpParser::Init()
 	return RET::SUC;
 }
 
+//解析器主入口
 int32_t HttpParser::Start(InputPacket *pInputPkt)
 {
 	//异常判断
@@ -53,6 +53,8 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	std::string uri = std::string(pPath, PathLen);
 	//解析url
 	ParserUri(uri, pInputPkt);
+	std::cout<<"Uri: "<<pInputPkt->m_Url<<std::endl;
+	std::cout<<"Query: "<<pInputPkt->m_Query<<std::endl;
 
 	std::string cookie;
 	for (uint32_t uIndex = 0; uIndex < HeaderNum; uIndex++)
@@ -63,17 +65,20 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 		//根据Content-Type中信息若为音视频等信息的不学习
 		if (key == NS_HTTPPARSER::CONTENT_TYPE)
 		{
-			if (value.find("audio/") == 0 || value.find("font/") == 0
-							|| value.find("image/") == 0 || value.find("multipart/") == 0
-							|| value.find("video/") == 0)
+			if (value.find("audio/") != std::string::npos 
+							|| value.find("font/") != std::string::npos
+							|| value.find("image/") != std::string::npos
+							|| value.find("multipart/") != std::string::npos
+							|| value.find("video/") != std::string::npos)
 			{
 				return RET::SUC;
 			}
-		} 
+		}
+ 
 		//请求头内只取host与cookie
 		if (key == NS_HTTPPARSER::HOST)
 		{
-			pInputPkt->m_Host = value;
+			pInputPkt->m_Host = std::string(value, value.size());
 		}
 
 		if (key == NS_HTTPPARSER::COOKIE)
@@ -83,56 +88,21 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	}
 
 	//过滤规则
-	//if (RET::SUC != IPDRuleMgr::GetInstance().MatchRules(pInputPkt))
-	//{
-	//	return RET::FAIL;
-	//}
-
-	//数据库连接
-	if (RET::SUC != db.Connect())
-	{
-		return RET::FAIL;
-	}
-	//url状态查询
-	MYSQL_RES *pResult = nullptr;
-	uint64_t NowTime = Timer::GetLocalTime();	
-	std::string Sql = "SELECT u_id, status FROM url_1_1 WHERE name = '" + pInputPkt->m_Url + "';";
-	if (RET::SUC != db.ExecQuery(Sql, pResult) || nullptr == pResult)
-	{
-		Sql = "INSERT INTO url_1_1(u_id, name, status, learn_process, learn_rate, hits, \
-				cycle_hits, readonly, lastactivetime, reliability) SELECT 0, '" 
-				+ pInputPkt->m_Url + "', 0, 1, 0, 0, 0, 0, " + std::to_string(NowTime) 
-				+ ", 0 FROM DUAL WHERE NOT EXISTS (SELECT name FROM url_1_1 WHERE name = '"
-				+ pInputPkt->m_Url + "');";
-		db.ExecSql(Sql);
-	}
-
-	if (0 == mysql_num_rows(pResult))
-	{
-		Sql = "INSERT INTO url_1_1(u_id, name, status, learn_process, learn_rate, hits, \
-				cycle_hits, readonly, lastactivetime, reliability) SELECT 0, '" 
-				+ pInputPkt->m_Url + "', 0, 1, 0, 0, 0, 0, " + std::to_string(NowTime) 
-				+ ", 0 FROM DUAL WHERE NOT EXISTS (SELECT name FROM url_1_1 WHERE name = '"
-				+ pInputPkt->m_Url + "');";
-		db.ExecSql(Sql);
-	}
-
-	MYSQL_ROW row = mysql_fetch_row(pResult);
-	if (nullptr == row[0] || nullptr == row[1])
+	if (RET::SUC != IPDRuleMgr::GetInstance().MatchRules(pInputPkt))
 	{
 		return RET::FAIL;
 	}
 
-	Sql = "UPDATE url_1_1 SET hits = hits + 1, cycle_hits = cycle_hits + 1 WHERE name = '"
-			+ pInputPkt->m_Url + "';";
-	mysql_free_result(pResult);
-	pResult = nullptr;
-	db.ExecSql(Sql);
-	db.Close();
-	
+	//解析cookie体	
+	ParserCookie(cookie);
+
+	//解析http体
+	ParserBody(http_body);
+
 	return RET::SUC;
 }
 
+//解析uri
 void HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 {
 	//size为0直接返回
@@ -140,14 +110,46 @@ void HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 	{
 		return;
 	}
-	
-	//按?进行切割
+
+	//decode解码
+	std::string decode_uri = StrProc::UrlDecode(uri);
+	//按?进行切割,取url
 	uint32_t uPos = uri.find('?');
-	if (uPos == std::string::npos)
+	uint32_t uDecPos = decode_uri.find('?');
+	if (uPos != std::string::npos)
 	{
-		pInputPkt->m_Url = uri;
-		return;
+		pInputPkt->m_Url = std::string(uri, 0, uPos);
+	}
+	else
+	{
+		pInputPkt->m_Url = std::string(uri);
 	}
 
-	pInputPkt->m_Url = std::string(uri, 0, uPos);
+	//截取query部分
+	if (uDecPos != std::string::npos)
+	{
+		pInputPkt->m_Query = std::string(decode_uri, 
+						uDecPos + 1, uri.size() - (uDecPos + 1));
+	}
+
+	return;
 } 
+
+//解析http请求头cookie体
+void HttpParser::ParserCookie(std::string cookie)
+{
+	if (0 == cookie.size())
+	{
+		return;
+	}
+}
+
+//解析http请求体
+void HttpParser::ParserBody(std::string http_body)
+{
+	//异常判断
+	if (0 == http_body.size())
+	{
+		return;
+	}
+}

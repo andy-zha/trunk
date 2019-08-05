@@ -63,16 +63,19 @@ class InputPacket
 		char SrcMac[18];                     //源mac地址
 		char DstMac[18];                     //宿mac地址
 #endif
-		char *pStr;                          //报文数据
 		uint32_t uLength;                    //报文长度
-		int32_t MinorVer;                  //版本号 
+		int32_t MinorVer;                    //版本号 
 		uint32_t m_ClientPort;               //源端口 	
 		uint32_t m_ServerPort;               //宿端口
+		char *pStr;                          //报文数据
 		std::string m_ClientIp;              //源ip
 		std::string m_ServerIp;              //宿ip
 		std::string m_HttpMethod;            //请求方法
 		std::string m_Url;                   //Url
+		std::string m_Query;                 //http请求
 		std::string m_Host;                  //域名
+		std::string m_SiteId;                //站点id
+		std::string m_BusinessId;            //业务id
 };
 
 #endif
