@@ -247,7 +247,7 @@ class IPDRuleMgr
 		IPDRuleMgr();
 
 		/**
-		 * @brief 查询业务函数
+		 * @brief 查询业务函数(gtest)
 		 *
 		 * @prame iter 当前业务槽
 		 *
@@ -256,7 +256,7 @@ class IPDRuleMgr
 		int32_t QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
 		/**
-		 * @brief 加载不学习Url
+		 * @brief 加载不学习Url(gtest)
 		 *
 		 * @prame iter 当前业务槽
 		 *
@@ -265,7 +265,7 @@ class IPDRuleMgr
 		int32_t LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
 		/**
-		 * @brief 处理不学习url
+		 * @brief 处理不学习url(gtest)
 		 *
 		 * @prame pResult 查询结果; iter 当前业务槽
 		 *
@@ -304,7 +304,7 @@ class IPDRuleMgr
 		int32_t DestroyBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
 		/**
-		 * @brief 加载信任ip
+		 * @brief 加载信任ip(gtest)
 		 *
 		 * @prame iter 当前业务槽
 		 *
@@ -313,7 +313,7 @@ class IPDRuleMgr
 		int32_t LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
 		/**
-		 * @brief 加载不信任ip
+		 * @brief 加载不信任ip(gtest)
 		 *
 		 * @prame iter 当前业务槽
 		 *
@@ -322,7 +322,7 @@ class IPDRuleMgr
 		int32_t LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
 		/**
-		 * @brief 加载自动删除配置 
+		 * @brief 加载自动删除配置(gtest)
 		 *
 		 * @prame iter 当前业务槽
 		 *
@@ -349,15 +349,15 @@ class IPDRuleMgr
 		int32_t ProcessAutoDelete();
 
 		/**
-		 * @brief 查询新业务 
+		 * @brief 查询新业务(gtest) 
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
 		int32_t QueryNewBusiness();
 
 		/**
-		 * @brief 注册业务  
-		 *
+		 * @brief 注册业务(gtest)
+		 * 
 		 * @prame row 业务信息
 		 * 
 		 * @return RET::SUC 成功; RET::FAIL 失败
@@ -413,10 +413,43 @@ class IPDRuleMgr
 		 * @brief 创建新的站点 
 		 *
 		 * @prame pInputPkt 数据包体; iter 当前业务槽
+		 *
+		 * @return RET::SUC成功 RET::FAIL 失败
 		 */
-		void CreateNewSite(InputPacket *&pInputPkt, std::vector<NS_IPDRULE::BrSlot>::iterator iter);
+		int32_t CreateNewSite(InputPacket *&pInputPkt, std::vector<NS_IPDRULE::BrSlot>::iterator iter);
 
+		/**
+		 * @brief 创建业务表(gtest)
+		 *
+		 * @return RET::SUC成功 RET::FAIL 失败
+		 */
+		int32_t CreateBusinessTable();
+
+		/**
+		 * @brief 创建信任ip表(gtest)
+		 *
+		 * @return RET::SUC成功 RET::FAIL 失败
+		 */
+		int32_t CreateTrustIpTable();
+
+		/**
+		 * @brief 创建非信任ip表(gtest)
+		 *
+		 * @return RET::SUC成功 RET::FAIL 失败
+		 */
+		int32_t CreateUnTrustIpTable();
+
+		/**
+		 * @brief 创建不学习url表(gtest)
+		 *
+		 * @return RET::SUC成功 RET::FAIL 失败
+		 */
+		int32_t CreateNotLearnUrlTable();
+#ifdef _GTEST_
+	public:
+#else
 	private:
+#endif
 		/**
 		 * @brief 业务链
 		 */

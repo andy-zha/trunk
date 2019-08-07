@@ -68,7 +68,7 @@ int32_t DbAdmin::ExecQuery(std::string Sql, MYSQL_RES *&pResult)
 		}
 	}
 	catch(...)
-	{	
+	{
 		return RET::FAIL;
 	}
 

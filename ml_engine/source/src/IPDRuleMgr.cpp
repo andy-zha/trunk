@@ -27,6 +27,41 @@ int32_t IPDRuleMgr::Init()
 	}
 	m_SiteNumMax = iValue;
 
+	//数据库连接
+	if (RET::SUC != m_DbAdmin.Connect())
+	{
+		std::cout<<"IPDRuleMgr: Db connect failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//创建业务表
+	if (RET::SUC != CreateBusinessTable())
+	{
+		std::cout<<"IPDRuleMgr: Create business table failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//创建信任ip表
+	if (RET::SUC != CreateTrustIpTable())
+	{
+		std::cout<<"IPDRuleMgr: Create trust ip table failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//创建非信任ip表
+	if (RET::SUC != CreateUnTrustIpTable())
+	{
+		std::cout<<"IPDRuleMgr: Create untrust ip table failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//创建不学习url表
+	if (RET::SUC != CreateNotLearnUrlTable())
+	{
+		std::cout<<"IPDRuleMgr: Create not learn url table failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
 	return RET::SUC;
 }
 
@@ -71,6 +106,10 @@ void IPDRuleMgr::Process()
 //查询业务
 int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
+#ifdef _GTEST_
+	m_DbAdmin.Connect();
+#endif
+
 	//加载不学习Url、信任IP、不信任IP
 	LoadNotLearnUrl(iter); 
 	LoadTrustIp(iter);
@@ -83,6 +122,11 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
+
+#ifdef _GTEST_
+		m_DbAdmin.Close();
+#endif
+
 		return RET::FAIL;
 	}
 
@@ -118,6 +162,10 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 
 	//更新站点状态
 	UpdateSite(iter);
+
+#ifdef _GTEST_
+		m_DbAdmin.Close();
+#endif
 
 	return RET::SUC;
 }
@@ -399,7 +447,11 @@ int32_t IPDRuleMgr::ProcessAutoDelete()
 //查询新业务
 int32_t IPDRuleMgr::QueryNewBusiness()
 {
-	std::string BusinessIdMax;
+#ifdef _GTEST_
+	m_DbAdmin.Connect();
+#endif
+	
+	std::string BusinessIdMax = "0";
 	if (0 < m_BusinessList.size())
 	{
 		BusinessIdMax = m_BusinessList.end()->m_BusinessId;
@@ -412,6 +464,11 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
 	{
 		m_ExecQueryFailed++;
+
+#ifdef _GTEST_
+		m_DbAdmin.Close();
+#endif
+
 		return RET::FAIL;
 	}
 
@@ -420,6 +477,11 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	{
 		mysql_free_result(pResult);
 		pResult = nullptr;
+
+#ifdef _GTEST_
+		m_DbAdmin.Close();
+#endif
+
 		return RET::SUC;
 	}
 
@@ -436,6 +498,11 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 
 	mysql_free_result(pResult);
 	pResult = nullptr;
+
+#ifdef _GTEST_
+		m_DbAdmin.Close();
+#endif
+
 	return RET::SUC;
 }
 
@@ -464,7 +531,7 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 	_Slot.m_BusinessId = row[NS_DBADMIN::EM_BUSINESS_ID];
 	_Slot.m_Ip = row[NS_DBADMIN::EM_BUSINESS_IP];
 	_Slot.m_Port = std::stoul(row[NS_DBADMIN::EM_BUSINESS_PORT]);
-	_Slot.m_Domain = std::stoul(row[NS_DBADMIN::EM_BUSINESS_DOMAIN]);
+	_Slot.m_Domain = row[NS_DBADMIN::EM_BUSINESS_DOMAIN];
 	_Slot.m_SiteKey = std::stoul(row[NS_DBADMIN::EM_BUSINESS_SITEKEY]);
 	_Slot.m_Cycle = std::stoul(row[NS_DBADMIN::EM_BUSINESS_CYCLE]); 
 
@@ -703,15 +770,77 @@ int32_t IPDRuleMgr::CompareSite(InputPacket *&pInputPkt,
 	return RET::FAIL;
 }
 
-void IPDRuleMgr::CreateNewSite(InputPacket *&pInputPkt,
+int32_t IPDRuleMgr::CreateNewSite(InputPacket *&pInputPkt,
 				std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 	if (nullptr == pInputPkt)
 	{
-		return;
+		return RET::FAIL;
 	}
 
 	std::string Sql = "INSERT INTO site_" + iter->m_BusinessId + "(s_id int, dip text, \
 					   d_port int, host text, hits int, learnstatus int, \
 					   checkstatus int) SELECT 0, ";
+}
+
+//创建业务表
+int32_t IPDRuleMgr::CreateBusinessTable()
+{
+	//创建表语句
+	std::string Sql = "CREATE TABLE IF NOT EXISTS business(b_id int primary key auto_increment, \
+					   name text, ip text, port int, host text, s_key int, cycle int, c_auto int, \
+					   d_auto int, d_time int, d_num int, audit_ac int, dedit_ac int, \
+					   learn_status int, check_status int);";
+	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	{
+		return RET::FAIL;
+	}
+
+	//设置主键为1开始
+	std::string Alter = "ALTER TABLE business auto_increment = 1;";
+	if (RET::SUC != m_DbAdmin.ExecSql(Alter))
+	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+//创建信任ip表
+int32_t IPDRuleMgr::CreateTrustIpTable()
+{
+	//创建表语句
+	std::string Sql = "CREATE TABLE IF NOT EXISTS trustip(ip text, b_id int);"; 
+	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+//创建不信任ip表
+int32_t IPDRuleMgr::CreateUnTrustIpTable()
+{
+	//创建表语句
+	std::string Sql = "CREATE TABLE IF NOT EXISTS untrustip(ip text, b_id int);"; 
+	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+//创建信任ip表
+int32_t IPDRuleMgr::CreateNotLearnUrlTable()
+{
+	//创建表语句
+	std::string Sql = "CREATE TABLE IF NOT EXISTS not_learn_url(url text, b_id int);"; 
+	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
 }

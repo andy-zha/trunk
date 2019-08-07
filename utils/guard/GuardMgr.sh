@@ -1,10 +1,5 @@
 # !/bin/bash
 
-PROCESS=ml_engine:ml_gtest
-PRO_MEM_APEX=10:23
-PRO_VMEM_APEX=1000:1223
-PRO_CPU_APX=20:20
-
 #异常信息
 Normal="normal"
 ArgsInvalid="args_invalid"
@@ -17,11 +12,26 @@ main()
 {
 	while [ 1 -eq 1 ]
 	do
-		ret=`./GuardOperator.sh p 'root' 'ml_engine'`
-		echo $ret
-		if [ $ret == $ProNotExists ] ; then
-			./ml_engine.sh
-		fi  
+		#检测进程是否存在
+		pid=`./GuardOperator.sh p 'root' 'ml_engine'`
+		echo $pid
+		if [ $pid == $ProNotExists ] ; then
+			echo "reboot"
+		else
+			#检测内存使用情况
+			mem=`./GuardOperator.sh m 'root' 'ml_engine' 80 80`
+			if [ $mem == $MemLarger ] ; then
+				kill -9 $pid
+				echo "reboot"
+			fi
+
+			#检测cpu使用情况
+			cpu=`./GuardOperator.sh c 'root' 'ml_engine' 80`
+			if [ $cpu == $CpuLarger ] ; then
+				kill -9 $pid
+				echo "reboot"
+			fi
+		fi
 	done
 }
 main

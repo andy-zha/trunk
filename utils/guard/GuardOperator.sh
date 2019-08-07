@@ -72,7 +72,7 @@ function GetMem() #Pid
 	echo ${mem}
 }
 
-#获取进程内存资源占比
+#获取进程虚存资源占比
 function GetVirMem() #Pid
 {
 	mem=0
@@ -129,7 +129,7 @@ function CheckMem() #PsUser #PsName #Apex #VApex
 	VApex=$4
 
 	#参数异常检测
-	if [ 3 -ne $# ] ; then
+	if [ 4 -ne $# ] ; then
 		echo $ArgsInvalid
 		return
 	else
@@ -213,7 +213,7 @@ main()
 		;;
 		#内存检测
 		m)
-			#内存检测参数应该为4个
+			#内存检测参数应该为5个
 			if [ 5 -ne $Opt ] ; then
 				echo $ArgsInvalid
 				return

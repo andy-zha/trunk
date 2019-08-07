@@ -22,4 +22,7 @@ TEST_F(TestConfig, TEST_CONFIG)
 	std::string Value;
 	ASSERT_EQ(RET::SUC, Config::GetCfg(NS_CONFIG::EM_CFGID_SERVER_IP, Value));
 	ASSERT_EQ(std::string("192.168.125.131"), Value);
+
+	ASSERT_EQ(RET::FAIL, Config::GetCfg(NS_CONFIG::EM_CFGID_END, iValue));
+	ASSERT_EQ(RET::FAIL, Config::GetCfg(NS_CONFIG::EM_CFGID_END, Value));
 }
