@@ -25,14 +25,24 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	}
 
 	//取出请求行和请求头
-	char *pPos = strstr(pInputPkt->pStr, "\r\n\r\n");
-	uint32_t uHeaderlen = pPos - pInputPkt->pStr;
+	uint32_t uHeaderlen = 0;
+	char *pPos = strstr(pInputPkt->pStr, "\r\n");
+	if (nullptr == pPos)
+	{
+		uHeaderlen = pInputPkt->uLength;
+	}
+	else
+	{
+		uHeaderlen = pPos - pInputPkt->pStr;
+	}
 	std::string http_header = std::string(pInputPkt->pStr, uHeaderlen);
 
 	//取出请求体
 	std::string http_body;
-	if (nullptr != (pPos + 4))
+	if (nullptr != pPos && nullptr != (pPos + 4))
+	{
 		http_body = pPos;
+	}
 
 	//解析请求行与请求头
 	const char *pMethod = nullptr;
@@ -87,11 +97,16 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 		}
 	}
 
+#ifndef _GTEST_
 	//过滤规则
 	if (RET::SUC != IPDRuleMgr::GetInstance().MatchRules(pInputPkt))
 	{
 		return RET::FAIL;
 	}
+#endif
+
+	//解析Query
+	ParserQuery(pInputPkt->m_Query);
 
 	//解析cookie体	
 	ParserCookie(cookie);
@@ -111,39 +126,76 @@ int32_t HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 		return RET::FAIL;
 	}
 
+	std::string Url;
 	//decode解码
 	std::string decode_uri = StrProc::UrlDecode(uri);
 	//按?进行切割,取url/query
 	uint32_t uPos = decode_uri.find('?');
 	if (uPos != std::string::npos)
 	{
-		pInputPkt->m_Url = std::string(uri, 0, uPos);
-		pInputPkt->m_Query = std::string(decode_uri, 
-						uPos + 1, uri.size() - (uPos + 1));
+		Url = std::string(uri, 0, uPos);
+		pInputPkt->m_Query = std::string(decode_uri,	uPos + 1, uri.size() - (uPos + 1));
 	}
 	else
 	{
-		pInputPkt->m_Url = std::string(uri);
+		Url = std::string(uri);
 	}
+
+	//一般情况下不会带域名
+	std::string ParserUrl = Url;
+	if (!Url.empty() && Url.at(0) != '/')
+	{
+		bool fullDomain = true;
+		uint32_t uPosSch = Url.find(':') + 1;
+		if (uPosSch != std::string::npos)
+		{
+			uint32_t uPosNet = Url.find("//", uPosSch) + 2;
+			if (uPosNet != std::string::npos)
+			{
+				uint32_t uPosPath = Url.find('/', uPosNet);
+				if (uPosPath != std::string::npos)
+				{
+					ParserUrl = Url.substr(uPosPath);
+				}
+			}
+		}
+	}
+
+	pInputPkt->m_Url = ParserUrl;
 
 	return RET::SUC;
 } 
 
+//解析请求行中的Query
+int32_t HttpParser::ParserQuery(std::string query)
+{
+	if (0 == query.size())
+	{
+		return RET::SUC;
+	}
+
+	return RET::SUC;
+}
+
 //解析http请求头cookie体
-void HttpParser::ParserCookie(std::string cookie)
+int32_t HttpParser::ParserCookie(std::string cookie)
 {
 	if (0 == cookie.size())
 	{
-		return;
+		return RET::SUC;
 	}
+
+	return RET::SUC;
 }
 
 //解析http请求体
-void HttpParser::ParserBody(std::string http_body)
+int32_t HttpParser::ParserBody(std::string http_body)
 {
 	//异常判断
 	if (0 == http_body.size())
 	{
-		return;
+		return RET::SUC;
 	}
+
+	return RET::SUC;
 }

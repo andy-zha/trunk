@@ -43,40 +43,6 @@ StrProc::StrProc()
 StrProc::~StrProc()
 {}
 
-//url编码接口
-std::string StrProc::UrlEncode(const std::string &src)
-{
-	//异常判断
-	if (0 == src.size())
-	{
-		return nullptr;
-	}
-
-	//编码
-	std::string buf;
-	std::string dst;
-	for (uint32_t uIndex = 0; uIndex < src.size(); uIndex++)
-	{
-		if (isalnum(src[uIndex]))
-		{
-			buf[0] = src[uIndex];
-		}
-		else if(isspace(src[uIndex]))
-		{
-			buf[0] = '+';
-		}
-		else
-		{
-			buf[0] = '%';
-			buf[1] = toHex((char)src[uIndex] >> 4);
-			buf[2] = toHex((char)src[uIndex] % 16);
-		}
-		dst += buf;
-	}
-
-	return dst;
-}
-
 std::string StrProc::UrlDecode(const std::string &src)
 {
 	//异常判断
@@ -120,9 +86,4 @@ std::string StrProc::UrlDecode(const std::string &src)
 	std::string sResult(pStart, pEnd);
 	delete [] pStart;
 	return sResult;
-}
-
-char StrProc::toHex(char ch)
-{
-	return ch > 9 ? ch + 55 : ch + 48;
 }

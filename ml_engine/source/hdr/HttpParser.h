@@ -107,22 +107,37 @@ class HttpParser
 		 * @brief 解析uri
 		 *
 		 * @prame uri; pInputPkt 包体 
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
 		int32_t ParserUri(std::string uri, InputPacket *pInputPkt);
+		
+		/**
+		 * @brief 解析query
+		 *
+		 * @prame query
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t ParserQuery(std::string query);
 
 		/**
 		 * @brief 解析cookie
 		 *
 		 * @prame cookie
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		void ParserCookie(std::string cookie);
+		int32_t ParserCookie(std::string cookie);
 
 		/**
 		 * @brief 解析http body
 		 *
 		 * @prame http_body http请求体
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		void ParserBody(std::string http_body);
+		int32_t ParserBody(std::string http_body);
 
 	private:
 		/**
