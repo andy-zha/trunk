@@ -1,5 +1,40 @@
 #include "StrProc.h"
 
+char StrProc::HEX2DEC[256] = {
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	0,  1,  2,  3,   4,  5,  6,  7,   
+	8,  9, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, 10, 11, 12,  13, 14, 15, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, 10, 11, 12,  13, 14, 15, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,  
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+	(char)-1, (char)-1, (char)-1, (char)-1,  (char)-1, (char)-1, (char)-1, (char)-1,
+};
+
 //构造函数
 StrProc::StrProc()
 {}
@@ -44,83 +79,50 @@ std::string StrProc::UrlEncode(const std::string &src)
 
 std::string StrProc::UrlDecode(const std::string &src)
 {
+	//异常判断
 	if (0 == src.size())
 	{
 		return nullptr;
 	}
 
-	const char * pSrc = (const char*)src.c_str();
-	const uint32_t uSrcLen = src.length();
-	const char * const pSrcEnd = pSrc + uSrcLen;
-	const char * const pLastDec = pSrcEnd - 2;
-	
-	char decone;
-	char dectwo;
-	char * const pStart = new char [uSrcLen];
-	char * pEnd = pStart; 
-	while (pSrc < pLastDec)
+	const unsigned char * pSrc = (const unsigned char *)src.c_str();
+	const uint32_t uSrclen = src.length();
+	const unsigned char * const pSrcEnd = pSrc + uSrclen;
+	// last decodable '%'
+	const unsigned char * const pSrcLastDec = pSrcEnd - 2;
+
+	char * const pStart = new char[uSrclen];
+	char * pEnd = pStart;
+
+	while (pSrc < pSrcLastDec) 
 	{
-		if (*pEnd == '%')
+		if (*pSrc == '%') 
 		{
-			if (-1 != (decone = Hex2Dec[*++pSrc])
-							&& (-1 != (dectwo = Hex2Dec[*++pSrc])))
+			char dec1;
+			char dec2;
+			if (-1 != (dec1 = StrProc::HEX2DEC[*(pSrc + 1)])
+                        && -1 != (dec2 = StrProc::HEX2DEC[*(pSrc + 2)])) 
 			{
-				*pEnd++ = (decone << 4) + dectwo;
-				++pSrc;
+				*pEnd++ = (dec1 << 4) + dec2;
+				pSrc += 3;
 				continue;
 			}
 		}
 		*pEnd++ = *pSrc++;
 	}
-
-	while (pSrc < pSrcEnd)
+        
+	// the last 2- chars
+	while (pSrc < pSrcEnd) 
 	{
 		*pEnd++ = *pSrc++;
 	}
-
-	std::string dst = std::string(pStart, pEnd);
+        
+	std::string sResult(pStart, pEnd);
 	delete [] pStart;
-
-	return dst;
+	return sResult;
 }
 
 char StrProc::toHex(char ch)
 {
 	return ch > 9 ? ch + 55 : ch + 48;
 }
-
-char StrProc::Hex2Dec[256] = 
-{
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	0, 1, 2, 3, 4, 5, 6, 7, 
-	8, 9, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, 
-	(char)-1, 10, 11, 12, 13, 14, 15, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, 10, 11, 12, 13, 14, 15, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-	(char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1, (char)-1,
-};

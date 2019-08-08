@@ -103,36 +103,30 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 }
 
 //解析uri
-void HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
+int32_t HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 {
 	//size为0直接返回
 	if (0 == uri.size()) 
 	{
-		return;
+		return RET::FAIL;
 	}
 
 	//decode解码
 	std::string decode_uri = StrProc::UrlDecode(uri);
-	//按?进行切割,取url
-	uint32_t uPos = uri.find('?');
-	uint32_t uDecPos = decode_uri.find('?');
+	//按?进行切割,取url/query
+	uint32_t uPos = decode_uri.find('?');
 	if (uPos != std::string::npos)
 	{
 		pInputPkt->m_Url = std::string(uri, 0, uPos);
+		pInputPkt->m_Query = std::string(decode_uri, 
+						uPos + 1, uri.size() - (uPos + 1));
 	}
 	else
 	{
 		pInputPkt->m_Url = std::string(uri);
 	}
 
-	//截取query部分
-	if (uDecPos != std::string::npos)
-	{
-		pInputPkt->m_Query = std::string(decode_uri, 
-						uDecPos + 1, uri.size() - (uDecPos + 1));
-	}
-
-	return;
+	return RET::SUC;
 } 
 
 //解析http请求头cookie体

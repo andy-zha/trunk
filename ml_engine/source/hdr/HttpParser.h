@@ -98,13 +98,17 @@ class HttpParser
 		 */
 		int32_t Start(InputPacket *pInputPkt);
 
+#ifdef _GTEST_
+	public:
+#else
 	private:
+#endif
 		/**
 		 * @brief 解析uri
 		 *
 		 * @prame uri; pInputPkt 包体 
 		 */
-		void ParserUri(std::string uri, InputPacket *pInputPkt);
+		int32_t ParserUri(std::string uri, InputPacket *pInputPkt);
 
 		/**
 		 * @brief 解析cookie

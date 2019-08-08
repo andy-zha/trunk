@@ -36,7 +36,7 @@ int32_t ConsoleMgr::Start()
 	std::cout<<"[ Boot: ./ml_console -args                                ]"<<std::endl;
 	std::cout<<"[ args: -help|-h: get tips                                ]"<<std::endl;
 	std::cout<<"[*********************************************************]"<<std::endl;
-	std::cout<<"[andy@ml_console]# ";
+	std::cout<<"[andy@ml_console ~]# ";
 	while (true)
 	{
 		std::cin>>cmd;
@@ -51,7 +51,7 @@ int32_t ConsoleMgr::Start()
 		else
 		{
 			std::cout<<"[usage]: try 'help' to get tips"<<std::endl;
-			std::cout<<"[andy@ml_console]# ";
+			std::cout<<"[andy@ml_console ~]# ";
 		} 
 	}
 	return RET::SUC;
@@ -60,7 +60,7 @@ int32_t ConsoleMgr::Start()
 void ConsoleMgr::MemCheckConsole()
 {
 	std::string cmd;
-	std::cout<<"[andy@memcheck]# ";
+	std::cout<<"[andy@ml_console memcheck]# ";
 	while (true)
 	{
 		std::cin>>cmd;
@@ -73,24 +73,24 @@ void ConsoleMgr::MemCheckConsole()
 			std::cout<<"       log: write log to file;"<<std::endl;
 			std::cout<<"       help: to get tips."<<std::endl;
 			std::cout<<std::endl;	
-			std::cout<<"[andy@memcheck]# ";
+			std::cout<<"[andy@ml_console memcheck]# ";
 		}
 		else if (cmd == std::string("log"))
 		{
 			std::string Sql = "UPDATE cmd SET memcheck = 1;";
 			m_db.ExecSql(Sql);
 			std::cout<<"Generate log file within 30s(Executable directory)."<<std::endl;
-			std::cout<<"[andy@memcheck]# ";
+			std::cout<<"[andy@ml_console memcheck]# ";
 		}
 		else if (cmd == std::string("quit"))
 		{
-			std::cout<<"[andy@ml_console]# ";
+			std::cout<<"[andy@ml_console ~]# ";
 			return;
 		}
 		else
 		{
 			std::cout<<"[usage]: try 'help' to get tips"<<std::endl;
-			std::cout<<"[andy@memcheck]# ";
+			std::cout<<"[andy@ml_console memcheck]# ";
 		} 
 	}
 

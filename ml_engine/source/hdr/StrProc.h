@@ -70,9 +70,9 @@ class StrProc
 
 	private:
 		/**
-		 * @brief Hex2Dec
+		 * @brief 十六进制数组
 		 */
-		static char Hex2Dec[256];
+		static char HEX2DEC[256];
 };
 
 #endif
