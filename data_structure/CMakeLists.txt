@@ -25,6 +25,7 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/tree/hdr)
 include_directories(${PROJECT_SOURCE_DIR}/tree/tcc)
+include_directories(${PROJECT_SOURCE_DIR}/list)
 
 # 库文件目录
 include_directories(${CMAKE_BUILD_RPATH}/include)
