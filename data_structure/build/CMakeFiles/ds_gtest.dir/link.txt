@@ -1,0 +1,1 @@
+/usr/bin/c++   --std=c++11 -g -fprofile-arcs -ftest-coverage   CMakeFiles/ds_gtest.dir/gtest/GtestBinaryTree.cpp.o CMakeFiles/ds_gtest.dir/gtest/main.cpp.o  -o ds_gtest  -L/opt/ide/lib -Wl,-rpath,/opt/ide:/opt/ide/lib -lgtest -lgcov 

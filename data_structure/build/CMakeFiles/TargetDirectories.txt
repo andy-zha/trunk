@@ -1,0 +1,6 @@
+/home/andy/trunk/data_structure/build/CMakeFiles/rebuild_cache.dir
+/home/andy/trunk/data_structure/build/CMakeFiles/edit_cache.dir
+/home/andy/trunk/data_structure/build/CMakeFiles/gen_coverage_html.dir
+/home/andy/trunk/data_structure/build/CMakeFiles/gen_coverage.dir
+/home/andy/trunk/data_structure/build/CMakeFiles/test.dir
+/home/andy/trunk/data_structure/build/CMakeFiles/ds_gtest.dir
