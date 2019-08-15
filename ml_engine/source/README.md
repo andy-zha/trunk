@@ -26,7 +26,7 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=GTEST -DCMAKE_BUILD_RPATH=/opt/ide ..
 make
 ```
-#生成gcov代码覆盖率
+# 生成gcov代码覆盖率
 ```
 rm -rf build 
 mkdir build

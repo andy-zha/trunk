@@ -4,6 +4,8 @@
 #include "MemoryDefine.h"
 #include "RetCodeDefine.h"
 #include <mysql/mysql.h> 
+#include <vector>
+#include <string>
 
 namespace NS_DBADMIN
 {
@@ -102,9 +104,28 @@ class DbAdmin
 		 */
 		int32_t ExecSql(std::string Sql);
 
+		/**
+		 * @brief 执行查询接口(stmt)
+		 *
+		 * @prame Sql 执行语句; pResult 查询结果
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t StmtExecQuery(std::string Sql, std::vector<std::string> Vec,
+						uint32_t uCount, std::vector<std::vector<std::string>> &Res);
+
+		/**
+		 * @brief 执行接口(stmt)
+		 *
+		 * @prame Sql 执行语句
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t StmtExecSql(std::string Sql, std::vector<std::string> Vec);
+
 	private:
 		/**
- 		 * @brief 数据库操作对象
+ 		 * @brief 数据库句柄
  		 */
 		MYSQL *conn;
 };
