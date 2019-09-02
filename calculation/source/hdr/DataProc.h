@@ -59,6 +59,33 @@ class DataProc
 		 */
 		static float GetAirthMeticMean(std::vector<NS_DATAPROC::DataStatistics> vec);
 
+		/**
+		 * @brief 冒泡排序
+		 *
+		 * @prame vSrc 排列
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		static int32_t BubbleSort(std::vector<int32_t> &vSrc);
+
+		/**
+		 * @brief 选择排序
+		 *
+		 * @prame vSrc 排列
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		static int32_t SelectSort(std::vector<int32_t> &vSrc);
+
+		/**
+		 * @brief 插入排序
+		 *
+		 * @prame vSrc 排列
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		static int32_t InsertSort(std::vector<int32_t> &vSrc);
+
 };
 
 #endif

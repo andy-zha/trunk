@@ -70,3 +70,83 @@ float DataProc::GetAirthMeticMean(std::vector<NS_DATAPROC::DataStatistics> vec)
 
 	return (float)Sum / Total;
 }
+
+//冒泡排序
+int32_t DataProc::BubbleSort(std::vector<int32_t> &vSrc)
+{
+	//异常判断
+	uint32_t uLength = vSrc.size();
+	if (0 == uLength) {
+		return RET::FAIL;
+	}
+
+	//冒泡排序
+	for (uint32_t uIndex = 0; uIndex < uLength; uIndex++) 
+	{
+		for (uint32_t uNum = 0; uNum < uLength - uIndex - 1; uNum++)
+		{
+			if (vSrc[uNum + 1] < vSrc[uNum])
+			{
+				std::swap(vSrc[uNum + 1], vSrc[uNum]);
+			}
+		}
+	}
+
+	return RET::SUC;
+}
+
+//选择排序
+int32_t DataProc::SelectSort(std::vector<int32_t> &vSrc)
+{
+	//异常判断
+	uint32_t uLength = vSrc.size();
+	if (0 == uLength) {
+		return RET::FAIL;
+	}
+
+	//选择排序
+	uint32_t uMinIndex = 0;
+	for (uint32_t uIndex = 0; uIndex < uLength; uIndex++)
+	{
+		uMinIndex = uIndex;
+		for (uint32_t uNum = uMinIndex; uNum < uLength; uNum++)
+		{
+			//寻找最小的下标
+			if (vSrc[uNum] < vSrc[uMinIndex])
+			{
+				uMinIndex = uNum;
+			}
+		}
+		//向前交换最小元素
+		std::swap(vSrc[uIndex], vSrc[uMinIndex]);
+	}
+
+	return RET::SUC;
+}
+
+//插入排序
+int32_t DataProc::InsertSort(std::vector<int32_t> &vSrc)
+{
+	//异常判断
+	uint32_t uLength = vSrc.size();
+	if (0 == uLength) {
+		return RET::FAIL;
+	}
+
+	int32_t iCurrent = 0;
+	int32_t iPreIndex = 0;
+	for (uint32_t uIndex = 0; uIndex < uLength - 1; uIndex++)
+	{
+		iCurrent = vSrc[uIndex + 1];
+		iPreIndex = uIndex;
+		//寻找插入点
+		while (iPreIndex >= 0 && iCurrent < vSrc[iPreIndex]) 
+		{
+			vSrc[iPreIndex + 1] = vSrc[iPreIndex];
+			iPreIndex--;
+		}
+		vSrc[iPreIndex + 1] = iCurrent;
+	}
+
+	return RET::SUC;
+}

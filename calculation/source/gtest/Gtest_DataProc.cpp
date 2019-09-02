@@ -45,3 +45,54 @@ TEST_F(Test_DataProc, GTest_GetAirthMeticMean)
 
 	ASSERT_FLOAT_EQ(5.28571428, DataProc::GetAirthMeticMean(vec));
 }
+
+TEST_F(Test_DataProc, GTest_Sort)
+{
+	//测试冒泡排序
+	std::vector<int32_t> vSrc;
+	vSrc.push_back(123);
+	vSrc.push_back(-123);
+	vSrc.push_back(24);
+	vSrc.push_back(0);
+	vSrc.push_back(89);
+	vSrc.push_back(21);
+	ASSERT_EQ(RET::SUC, DataProc::BubbleSort(vSrc));
+	ASSERT_EQ(123, vSrc[5]);
+	ASSERT_EQ(89, vSrc[4]);
+	ASSERT_EQ(24, vSrc[3]);
+	ASSERT_EQ(21, vSrc[2]);
+	ASSERT_EQ(0, vSrc[1]);
+	ASSERT_EQ(-123, vSrc[0]);
+
+	//测试选择排序
+	vSrc.clear();
+	vSrc.push_back(128);
+	vSrc.push_back(-124);
+	vSrc.push_back(28);
+	vSrc.push_back(0);
+	vSrc.push_back(81);
+	vSrc.push_back(22);
+	ASSERT_EQ(RET::SUC, DataProc::SelectSort(vSrc));
+	ASSERT_EQ(128, vSrc[5]);
+	ASSERT_EQ(81, vSrc[4]);
+	ASSERT_EQ(28, vSrc[3]);
+	ASSERT_EQ(22, vSrc[2]);
+	ASSERT_EQ(0, vSrc[1]);
+	ASSERT_EQ(-124, vSrc[0]);
+
+	//测试选择排序
+	vSrc.clear();
+	vSrc.push_back(129);
+	vSrc.push_back(-124);
+	vSrc.push_back(23);
+	vSrc.push_back(0);
+	vSrc.push_back(98);
+	vSrc.push_back(13);
+	ASSERT_EQ(RET::SUC, DataProc::InsertSort(vSrc));
+	ASSERT_EQ(129, vSrc[5]);
+	ASSERT_EQ(98, vSrc[4]);
+	ASSERT_EQ(23, vSrc[3]);
+	ASSERT_EQ(13, vSrc[2]);
+	ASSERT_EQ(0, vSrc[1]);
+	ASSERT_EQ(-124, vSrc[0]);
+}

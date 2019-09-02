@@ -23,8 +23,28 @@ include_directories(${CMAKE_BUILD_RPATH}/include)
 link_directories(${CMAKE_BUILD_RPATH}/lib)
 
 # 编译选项
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -fprofile-arcs -ftest-coverage")
 
 # 指定生成目标
 add_executable(Calculation ${CALCULATION_SRC_FILES} ${CALCULATION_TEST_FILES})
 target_link_libraries(Calculation PRIVATE gtest)
+target_link_libraries(Calculation PRIVATE gcov)
+#执行程序
+add_custom_target(test
+	COMMAND ./Calculation
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build
+	COMMENT "run test suit.")
+
+add_custom_target(gen_coverage
+	COMMAND lcov -d CMakeFiles/Calculation.dir/src -t Calculation -o 'Calculation.cov.info' -b . -c
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build
+	COMMENT "genarate coverage info")
+
+add_custom_target(gen_coverage_html
+	COMMAND genhtml -o cov_result Calculation.cov.info
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build
+	COMMENT "genarate coverage info to ./cov_result")
+
+add_dependencies(gen_coverage test)
+add_dependencies(gen_coverage Calculation)
+add_dependencies(gen_coverage_html gen_coverage)

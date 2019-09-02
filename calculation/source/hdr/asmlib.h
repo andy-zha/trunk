@@ -1,10 +1,8 @@
 #ifndef _ASMLIB_H_
 #define _ASMLIB_H_
 #include <stdio.h>
+#include <stdint.h>
 #include <iostream>
-
-typedef int int32_t;
-typedef unsigned int uint32_t;
 
 namespace RET
 {
