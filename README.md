@@ -1,8 +1,5 @@
 # trunk
 #
-# @brief andynotes
-# @description 安迪笔记
-# 
 # @brief utils
 # @description 小工具，主要为一些脚本
 #
