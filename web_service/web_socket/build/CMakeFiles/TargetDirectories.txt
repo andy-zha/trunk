@@ -1,0 +1,3 @@
+/home/andy/trunk/web_service/web_socket/build/CMakeFiles/rebuild_cache.dir
+/home/andy/trunk/web_service/web_socket/build/CMakeFiles/edit_cache.dir
+/home/andy/trunk/web_service/web_socket/build/CMakeFiles/web_socket.dir
