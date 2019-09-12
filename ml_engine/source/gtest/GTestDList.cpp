@@ -23,7 +23,7 @@ class GTest
 		int32_t iTest;
 };
 
-TEST_F(TestDList, Test_DList)
+TEST_F(TestDList, Test_DLIST)
 {
 	DList<GTest> m_TestLists;
 

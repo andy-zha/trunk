@@ -6,6 +6,7 @@
 #include "InputPacket.h"
 #include "HttpParser.h"
 #include "Config.h"
+#include "Timer.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -191,6 +192,18 @@ class Processor
  		 * @prame buf ev_arr
  		 */
 		void Write(NS_ACCEPTOR::epoll_buf *buf);
+
+		/**
+		 * @brief 写日志函数
+		 */
+		void WriteLog();
+
+		/**
+		 * @brief 封装日志流
+		 *
+		 * @prame log 日志流
+		 */
+		void SprintfLogStream(std::string &log);
 
 #ifdef _MEMCHECK_
 		/**

@@ -111,7 +111,16 @@ class HttpParser
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
 		int32_t ParserUri(std::string uri, InputPacket *pInputPkt);
-		
+	
+		/**
+		 * @brief 过滤url请求参数
+		 *
+		 * @prame url
+		 *
+		 * @return 过滤结果
+		 */
+		std::string FilterUrl(std::string url);
+
 		/**
 		 * @brief 解析query
 		 *

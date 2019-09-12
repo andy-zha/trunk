@@ -307,6 +307,40 @@ void Processor::Write(NS_ACCEPTOR::epoll_buf *buf)
 	Free((NS_ACCEPTOR::epoll_buf*)pEndfree);
 }
 
+void Processor::WriteLog()
+{
+	std::ofstream io;
+	io.open("/data/logs/ml_engine/ml.log", std::ios::app);
+
+	//输出日志头
+	time_t nowtime = time(NULL);
+	struct tm *local = localtime(&nowtime);
+	std::string log = "ML_ENGINE[" + std::to_string(getpid()) + "] " 
+			+ std::to_string(local->tm_year + 1900) + "/" 
+			+ std::to_string(local->tm_mon + 1)	+ "/"
+			+ std::to_string(local->tm_mday) + " "
+			+ std::to_string(local->tm_hour) + ":"
+			+ std::to_string(local->tm_min) + ":"
+			+ std::to_string(local->tm_sec);
+	io<<log<<std::endl;
+
+	//输出处理模块日志
+	std::string pro_log;
+	SprintfLogStream(pro_log);
+	io<<pro_log<<std::endl;
+	
+	io<<std::endl<<std::endl;
+}
+
+void Processor::SprintfLogStream(std::string &log)
+{
+	log = "Processor: EpollTimeout[" + std::to_string(m_EpollTimeout)
+			+ "] EpollWait[" + std::to_string(m_EpollWait)
+			+ "] AcceptFailed[" + std::to_string(m_AcceptFailed)
+			+ "] EpollCtlFailed[" + std::to_string(m_EpollCtlFailed)
+			+ "]";
+}
+
 #ifdef _MEMCHECK_
 
 void Processor::MemCheck()

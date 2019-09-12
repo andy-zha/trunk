@@ -27,12 +27,9 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	//取出请求行和请求头
 	uint32_t uHeaderlen = 0;
 	char *pPos = strstr(pInputPkt->pStr, "\r\n");
-	if (nullptr == pPos)
-	{
+	if (nullptr == pPos) {
 		uHeaderlen = pInputPkt->uLength;
-	}
-	else
-	{
+	}else {
 		uHeaderlen = pPos - pInputPkt->pStr;
 	}
 	std::string http_header = std::string(pInputPkt->pStr, uHeaderlen);
@@ -51,10 +48,10 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	size_t MethodLen = 0;
 	size_t PathLen = 0;
 	size_t HeaderNum = 32;
-	size_t Ret = phr_parse_request(http_header.data(), http_header.size(), &pMethod, 
-					&MethodLen, &pPath, &PathLen, &pInputPkt->MinorVer, headers, &HeaderNum, 0);
-	if (-1 == Ret)
-	{
+	size_t Ret = phr_parse_request(http_header.data(), http_header.size(), 
+					&pMethod, &MethodLen, &pPath, &PathLen, &pInputPkt->MinorVer, 
+					headers, &HeaderNum, 0);
+	if (-1 == Ret) {
 		return RET::FAIL;
 	}
 
@@ -131,13 +128,10 @@ int32_t HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 	std::string decode_uri = StrProc::UrlDecode(uri);
 	//按?进行切割,取url/query
 	uint32_t uPos = decode_uri.find('?');
-	if (uPos != std::string::npos)
-	{
+	if (uPos != std::string::npos) {
 		Url = std::string(uri, 0, uPos);
-		pInputPkt->m_Query = std::string(decode_uri,	uPos + 1, uri.size() - (uPos + 1));
-	}
-	else
-	{
+		pInputPkt->m_Query = std::string(decode_uri, uPos + 1, uri.size() - (uPos + 1));
+	}else {
 		Url = std::string(uri);
 	}
 
@@ -161,16 +155,27 @@ int32_t HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 		}
 	}
 
-	pInputPkt->m_Url = ParserUrl;
+	pInputPkt->m_Url = FilterUrl(ParserUrl);
 
 	return RET::SUC;
+}
+
+//过滤url以分号为分隔符后面的请求数据
+std::string HttpParser::FilterUrl(std::string url)
+{
+	uint32_t uPos = url.find(';');
+	if (std::string::npos == uPos) {
+		return url;
+	}
+
+	std::string ret = std::string(url, 0, uPos);
+	return ret;
 } 
 
 //解析请求行中的Query
 int32_t HttpParser::ParserQuery(std::string query)
 {
-	if (0 == query.size())
-	{
+	if (query.empty()) {
 		return RET::SUC;
 	}
 
@@ -180,8 +185,7 @@ int32_t HttpParser::ParserQuery(std::string query)
 //解析http请求头cookie体
 int32_t HttpParser::ParserCookie(std::string cookie)
 {
-	if (0 == cookie.size())
-	{
+	if (cookie.empty()) {
 		return RET::SUC;
 	}
 
@@ -192,8 +196,7 @@ int32_t HttpParser::ParserCookie(std::string cookie)
 int32_t HttpParser::ParserBody(std::string http_body)
 {
 	//异常判断
-	if (0 == http_body.size())
-	{
+	if (http_body.empty()) {
 		return RET::SUC;
 	}
 

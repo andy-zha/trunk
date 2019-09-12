@@ -62,6 +62,12 @@ int32_t IPDRuleMgr::Init()
 		return RET::FAIL;
 	}
 
+	if (RET::SUC != m_DbAdmin.Close()) 
+	{
+		std::cout<<"IPDRuleMgr: Close database failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
 	return RET::SUC;
 }
 
@@ -374,7 +380,8 @@ int32_t IPDRuleMgr::LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	return RET::SUC;
 }
 
-int32_t IPDRuleMgr::LoadAutoDeleteConfig(MYSQL_ROW row, std::vector<NS_IPDRULE::BrSlot>::iterator iter)
+int32_t IPDRuleMgr::LoadAutoDeleteConfig(MYSQL_ROW row, 
+				std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 	//异常判断
 	if (nullptr == row)
@@ -609,7 +616,7 @@ int32_t IPDRuleMgr::MatchBusiness(InputPacket *&pInputPkt,
 	{
 		//匹配业务且业务学习状态不能为学习暂停
 		if (RET::SUC == CompareBusiness(pInputPkt, iter) 
-						&& 0 != iter->m_LearnStatus)
+						&& NS_IPDRULE::TIMEOUT_STATUS != iter->m_LearnStatus)
 		{
 			if (fDegree < iter->m_Degree)
 			{
@@ -641,14 +648,16 @@ int32_t IPDRuleMgr::CompareBusiness(InputPacket *&pInputPkt,
 	}
 
 	//比较ip/port/domain
-	if ((0 != iter->m_Ip.size() && iter->m_Ip == pInputPkt->m_ServerIp)
-			|| (0 != iter->m_Port && iter->m_Port == pInputPkt->m_ServerPort)
-			|| (0 != iter->m_Domain.size() && iter->m_Domain == pInputPkt->m_Host)) 
+	if ((0 != iter->m_Ip.size() 
+					&& RET::SUC != CompareIp(iter->m_Ip, pInputPkt->m_ServerIp))
+					|| (0 != iter->m_Port && iter->m_Port != pInputPkt->m_ServerPort)
+					|| (0 != iter->m_Domain.size() 
+							&& RET::SUC != CompareDomain(iter->m_Domain, pInputPkt->m_Host)))
 	{
-		return RET::SUC;
+		return RET::FAIL;
 	}
 
-	return RET::FAIL;
+	return RET::SUC;
 }
 
 //匹配业务内非信任ip及不学习url配置
@@ -760,9 +769,11 @@ int32_t IPDRuleMgr::CompareSite(InputPacket *&pInputPkt,
 	}
 
 	//比较站点信息
-	if ((0 != iter->m_Ip.size() && pInputPkt->m_ServerIp == iter->m_Ip)
-			|| (0 != iter->m_Port && pInputPkt->m_ServerPort == iter->m_Port)
-			|| (0 != iter->m_Domain.size() && pInputPkt->m_Host == iter->m_Domain))
+	if ((0 != iter->m_Ip.size() 
+			&& RET::SUC != CompareIp(pInputPkt->m_ServerIp,iter->m_Ip))
+			|| (0 != iter->m_Port && pInputPkt->m_ServerPort != iter->m_Port)
+			|| (0 != iter->m_Domain.size() 
+				&& RET::SUC != CompareDomain(pInputPkt->m_Host, iter->m_Domain)))
 	{
 		return RET::SUC;
 	}
@@ -778,8 +789,8 @@ int32_t IPDRuleMgr::CreateNewSite(InputPacket *&pInputPkt,
 		return RET::FAIL;
 	}
 
-	std::string Sql = "INSERT INTO site_" + iter->m_BusinessId + "(s_id int, dip text, \
-					   d_port int, host text, hits int, learnstatus int, \
+	std::string Sql = "INSERT INTO site_" + iter->m_BusinessId + "(s_id int, \
+					   dip text, d_port int, host text, hits int, learnstatus int, \
 					   checkstatus int) SELECT 0, ";
 }
 
@@ -787,9 +798,10 @@ int32_t IPDRuleMgr::CreateNewSite(InputPacket *&pInputPkt,
 int32_t IPDRuleMgr::CreateBusinessTable()
 {
 	//创建表语句
-	std::string Sql = "CREATE TABLE IF NOT EXISTS business(b_id int primary key auto_increment, \
-					   name text, ip text, port int, host text, s_key int, cycle int, c_auto int, \
-					   d_auto int, d_time int, d_num int, audit_ac int, dedit_ac int, \
+	std::string Sql = "CREATE TABLE IF NOT EXISTS business(b_id int primary \
+					   key auto_increment, name text, ip text, port int, \
+					   host text, s_key int, cycle int, c_auto int, d_auto int, \
+					   d_time int, d_num int, audit_ac int, dedit_ac int, \
 					   learn_status int, check_status int);";
 	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
 	{
@@ -839,6 +851,73 @@ int32_t IPDRuleMgr::CreateNotLearnUrlTable()
 	std::string Sql = "CREATE TABLE IF NOT EXISTS not_learn_url(url text, b_id int);"; 
 	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
 	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+//比较ip是否相同
+int32_t IPDRuleMgr::CompareIp(std::string ip, std::string _ip)
+{
+	//异常判断
+	if (0 == ip.size() || 0 == _ip.size()) {
+		return RET::FAIL;
+	}
+
+	//ip相同直接返回
+	if (ip == _ip) {
+		return RET::SUC;
+	}
+
+	//不包含*通配符或者ip长度小于非通配字符长度返回失败
+	uint32_t uPos = _ip.find("/");
+	if (std::string::npos == uPos) 
+	{
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+//比较域名是否相同
+int32_t IPDRuleMgr::CompareDomain(std::string domain, std::string _domain)
+{
+	//异常判断
+	if (0 == domain.size() || 0 == _domain.size()) {
+		return RET::FAIL;
+	}
+
+	//domain相同直接返回
+	if (domain == _domain) {
+		return RET::SUC;
+	}
+
+	//不包含*通配符或者domain长度小于非通配字符长度返回失败
+	uint32_t uPos = _domain.find("*");
+	if (std::string::npos == uPos || domain.size() < uPos) 
+	{
+		return RET::FAIL;
+	}
+
+	std::string Varone;
+	std::string Vartwo;
+	//取非通匹部分
+	if (0 == uPos) {
+		if (domain.size() < _domain.size() - 1) {
+			return RET::FAIL;
+		} 
+
+		uint32_t start = domain.size() - _domain.size() + 1;
+		Varone = std::string(domain, start);
+		Vartwo = std::string(_domain, 1);
+	} else {
+		Varone = std::string(domain, 0, uPos);
+		Vartwo = std::string(_domain, 0, uPos);
+	}
+
+	//比较非通配部分是否相同
+	if (Varone != Vartwo) {
 		return RET::FAIL;
 	}
 

@@ -13,6 +13,11 @@
 
 namespace NS_IPDRULE
 {
+	//暂停状态值
+	static const uint32_t TIMEOUT_STATUS = 0;
+	//运行状态值
+	static const uint32_t RUN_STATUS = 1;
+
 	//站点结点
 	class SiteSlot
 	{
@@ -445,6 +450,25 @@ class IPDRuleMgr
 		 * @return RET::SUC成功 RET::FAIL 失败
 		 */
 		int32_t CreateNotLearnUrlTable();
+
+		/**
+		 * @brief 比较ip是否相同
+		 *
+		 * @prame ip _ip
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t CompareIp(std::string ip, std::string _ip);
+
+		/**
+		 * @brief 比较域名是否相同
+		 *
+		 * @prame domain _domain
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t CompareDomain(std::string domain, std::string _domain);
+
 #ifdef _GTEST_
 	public:
 #else
