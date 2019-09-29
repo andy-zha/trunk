@@ -20,7 +20,7 @@ int32_t IPDRuleMgr::Init()
 {
 	//读取站点最大值
 	int32_t iValue = -1;
-	if (RET::SUC != Config::GetCfg(NS_CONFIG::EM_CFGID_SITE_MAX_NUM, iValue))
+	if (RET::SUC != Config::getCfg(NS_CONFIG::EM_CFGID_SITE_MAX_NUM, iValue))
 	{
 		std::cout<<"IPDRuleMgr: Read site max failed!"<<std::endl;
 		return RET::FAIL;
@@ -28,7 +28,7 @@ int32_t IPDRuleMgr::Init()
 	m_SiteNumMax = iValue;
 
 	//数据库连接
-	if (RET::SUC != m_DbAdmin.Connect())
+	if (RET::SUC != m_DbAdmin.connect())
 	{
 		std::cout<<"IPDRuleMgr: Db connect failed!"<<std::endl;
 		return RET::FAIL;
@@ -62,7 +62,7 @@ int32_t IPDRuleMgr::Init()
 		return RET::FAIL;
 	}
 
-	if (RET::SUC != m_DbAdmin.Close()) 
+	if (RET::SUC != m_DbAdmin.close()) 
 	{
 		std::cout<<"IPDRuleMgr: Close database failed!"<<std::endl;
 		return RET::FAIL;
@@ -72,7 +72,7 @@ int32_t IPDRuleMgr::Init()
 }
 
 //主处理接口
-void IPDRuleMgr::Process()
+void IPDRuleMgr::process()
 {
 	uint64_t Nowtime = Timer::GetLocalTime();
 	//未到加载时间不加载
@@ -82,7 +82,7 @@ void IPDRuleMgr::Process()
 	}
 
 	//数据库连接
-	if (RET::SUC != m_DbAdmin.Connect())
+	if (RET::SUC != m_DbAdmin.connect())
 	{
 		m_ConnectDbFailed++;
 		return;
@@ -100,7 +100,7 @@ void IPDRuleMgr::Process()
 	QueryNewBusiness();
 
 	//数据库去连接
-	if (RET::SUC != m_DbAdmin.Close())
+	if (RET::SUC != m_DbAdmin.close())
 	{
 		m_CloseDbFailed++;
 	}
@@ -113,7 +113,7 @@ void IPDRuleMgr::Process()
 int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 #ifdef _GTEST_
-	m_DbAdmin.Connect();
+	m_DbAdmin.connect();
 #endif
 
 	//加载不学习Url、信任IP、不信任IP
@@ -123,14 +123,14 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 
 	//加载学习周期、自动删除配置、业务学习状态
 	MYSQL_RES *pResult = nullptr;
-	std::string Sql = "SELECT cycle, d_auto, d_time, d_num, learn_status FROM business \
+	std::string Sql = "SELECT cycle, d_auto, d_time, d_num FROM business \
 					   WHERE b_id = " + iter->m_BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 
 #ifdef _GTEST_
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 #endif
 
 		return RET::FAIL;
@@ -154,12 +154,6 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 
 		//加载自动删除配置
 		LoadAutoDeleteConfig(row, iter);
-		
-		//加载学习状态
-		if (nullptr != row[4])
-		{
-			iter->m_LearnStatus = std::stoul(row[4]);
-		}
 	}
 
 	//内存释放
@@ -170,7 +164,7 @@ int32_t IPDRuleMgr::QueryBusiness(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	UpdateSite(iter);
 
 #ifdef _GTEST_
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 #endif
 
 	return RET::SUC;
@@ -183,7 +177,7 @@ int32_t IPDRuleMgr::LoadNotLearnUrl(std::vector<NS_IPDRULE::BrSlot>::iterator it
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT url FROM not_learn_url WHERE b_id = " 
 		+ iter->m_BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult))
 	{
 		m_ExecQueryFailed++;
 		return RET::FAIL;
@@ -247,7 +241,7 @@ void IPDRuleMgr::DeleteUrlData(std::string BusinessId, std::string Url)
 	//查询当前业务下所有站点
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT s_id FROM site_" + BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return;	
@@ -263,7 +257,7 @@ void IPDRuleMgr::DeleteUrlData(std::string BusinessId, std::string Url)
 			MYSQL_RES *pUrl = nullptr;
 			Sql = "SELECT u_id FROM url_" + BusinessId + "_" + row[0]
 					+ " WHERE name = '" + Url + ";";
-			if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pUrl) || nullptr == pUrl)
+			if (RET::SUC != m_DbAdmin.execQuery(Sql, pUrl) || nullptr == pUrl)
 			{
 				m_ExecQueryFailed++;
 				continue;
@@ -295,14 +289,14 @@ void IPDRuleMgr::DeleteUrl(std::string BusinessId, std::string SiteId, std::stri
 {
 	std::string Sql = "DELETE FROM url_" + BusinessId + "_" + SiteId + " WHERE u_id = "
 			+ UrlId + ";";
-	m_DbAdmin.ExecSql(Sql);
+	m_DbAdmin.execSql(Sql);
 }
 
 //删除Args表
 void IPDRuleMgr::DropArgsTable(std::string BusinessId, std::string SiteId, std::string UrlId)
 {
 	std::string Sql = "DROP TABLE args_" + BusinessId + "_" + SiteId + "_" + UrlId + ";";
-	m_DbAdmin.ExecSql(Sql);
+	m_DbAdmin.execSql(Sql);
 }
 
 //注销业务
@@ -317,7 +311,7 @@ int32_t IPDRuleMgr::LoadTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 {
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT ip FROM trustip WHERE b_id = " + iter->m_BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return RET::FAIL;
@@ -351,7 +345,7 @@ int32_t IPDRuleMgr::LoadUnTrustIp(std::vector<NS_IPDRULE::BrSlot>::iterator iter
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT ip FROM untrustip WHERE b_id = " 
 			+ iter->m_BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
 		return RET::FAIL;
@@ -422,7 +416,7 @@ int32_t IPDRuleMgr::UpdateSite(std::vector<NS_IPDRULE::BrSlot>::iterator iter)
 		MYSQL_RES *pResult = nullptr;
 		std::string Sql = "SELECT learn_status FROM site_" + iter->m_BusinessId
 				+ " WHERE s_id = " + it->m_SiteId + ";";
-		if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+		if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult) || nullptr == pResult)
 		{
 			m_ExecQueryFailed++;
 			continue;
@@ -455,7 +449,7 @@ int32_t IPDRuleMgr::ProcessAutoDelete()
 int32_t IPDRuleMgr::QueryNewBusiness()
 {
 #ifdef _GTEST_
-	m_DbAdmin.Connect();
+	m_DbAdmin.connect();
 #endif
 	
 	std::string BusinessIdMax = "0";
@@ -468,12 +462,12 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT * FROM business WHERE b_id > " 
 			+ BusinessIdMax + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult))
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult))
 	{
 		m_ExecQueryFailed++;
 
 #ifdef _GTEST_
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 #endif
 
 		return RET::FAIL;
@@ -486,7 +480,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 		pResult = nullptr;
 
 #ifdef _GTEST_
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 #endif
 
 		return RET::SUC;
@@ -507,7 +501,7 @@ int32_t IPDRuleMgr::QueryNewBusiness()
 	pResult = nullptr;
 
 #ifdef _GTEST_
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 #endif
 
 	return RET::SUC;
@@ -564,12 +558,6 @@ int32_t IPDRuleMgr::RegisterBusiness(MYSQL_ROW row)
 		}
 	}
 
-	//读取业务学习状态
-	if (nullptr != row[NS_DBADMIN::EM_BUSINESS_LEARNSTATUS])
-	{
-		_Slot.m_LearnStatus = std::stoul(row[NS_DBADMIN::EM_BUSINESS_LEARNSTATUS]);
-	}
-
 	//插入业务结点
 	m_BusinessList.push_back(_Slot);
 	return RET::SUC;
@@ -615,8 +603,7 @@ int32_t IPDRuleMgr::MatchBusiness(InputPacket *&pInputPkt,
 	for (; iter != m_BusinessList.end(); iter++)
 	{
 		//匹配业务且业务学习状态不能为学习暂停
-		if (RET::SUC == CompareBusiness(pInputPkt, iter) 
-						&& NS_IPDRULE::TIMEOUT_STATUS != iter->m_LearnStatus)
+		if (RET::SUC == CompareBusiness(pInputPkt, iter))
 		{
 			if (fDegree < iter->m_Degree)
 			{
@@ -716,7 +703,7 @@ int32_t IPDRuleMgr::MatchSite(InputPacket *&pInputPkt,
 	}
 
 	//查询数据库站点数是否达到最大数
-	if (RET::SUC != m_DbAdmin.Connect())
+	if (RET::SUC != m_DbAdmin.connect())
 	{
 		m_ConnectDbFailed++;
 		return RET::FAIL;
@@ -725,10 +712,10 @@ int32_t IPDRuleMgr::MatchSite(InputPacket *&pInputPkt,
 	//查询当前业务总站点数
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT COUNT(*) FROM site_" + iter->m_BusinessId + ";";
-	if (RET::SUC != m_DbAdmin.ExecQuery(Sql, pResult) || nullptr == pResult)
+	if (RET::SUC != m_DbAdmin.execQuery(Sql, pResult) || nullptr == pResult)
 	{
 		m_ExecQueryFailed++;
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 		return RET::FAIL;
 	}
 
@@ -740,7 +727,7 @@ int32_t IPDRuleMgr::MatchSite(InputPacket *&pInputPkt,
 		{
 			mysql_free_result(pResult);
 			pResult = nullptr;
-			m_DbAdmin.Close();
+			m_DbAdmin.close();
 			return RET::FAIL;
 		}
 
@@ -748,13 +735,13 @@ int32_t IPDRuleMgr::MatchSite(InputPacket *&pInputPkt,
 		mysql_free_result(pResult);
 		pResult = nullptr;
 		CreateNewSite(pInputPkt, iter);
-		m_DbAdmin.Close();
+		m_DbAdmin.close();
 		return RET::SUC;
 	}
 
 	mysql_free_result(pResult);
 	pResult = nullptr;
-	m_DbAdmin.Close();
+	m_DbAdmin.close();
 	return RET::FAIL;
 }
 
@@ -801,16 +788,15 @@ int32_t IPDRuleMgr::CreateBusinessTable()
 	std::string Sql = "CREATE TABLE IF NOT EXISTS business(b_id int primary \
 					   key auto_increment, name text, ip text, port int, \
 					   host text, s_key int, cycle int, c_auto int, d_auto int, \
-					   d_time int, d_num int, audit_ac int, dedit_ac int, \
-					   learn_status int, check_status int);";
-	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+					   d_time int, d_num int, audit_ac int, dedit_ac int);";
+	if (RET::SUC != m_DbAdmin.execSql(Sql))
 	{
 		return RET::FAIL;
 	}
 
 	//设置主键为1开始
 	std::string Alter = "ALTER TABLE business auto_increment = 1;";
-	if (RET::SUC != m_DbAdmin.ExecSql(Alter))
+	if (RET::SUC != m_DbAdmin.execSql(Alter))
 	{
 		return RET::FAIL;
 	}
@@ -823,7 +809,7 @@ int32_t IPDRuleMgr::CreateTrustIpTable()
 {
 	//创建表语句
 	std::string Sql = "CREATE TABLE IF NOT EXISTS trustip(ip text, b_id int);"; 
-	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	if (RET::SUC != m_DbAdmin.execSql(Sql))
 	{
 		return RET::FAIL;
 	}
@@ -836,7 +822,7 @@ int32_t IPDRuleMgr::CreateUnTrustIpTable()
 {
 	//创建表语句
 	std::string Sql = "CREATE TABLE IF NOT EXISTS untrustip(ip text, b_id int);"; 
-	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	if (RET::SUC != m_DbAdmin.execSql(Sql))
 	{
 		return RET::FAIL;
 	}
@@ -849,7 +835,7 @@ int32_t IPDRuleMgr::CreateNotLearnUrlTable()
 {
 	//创建表语句
 	std::string Sql = "CREATE TABLE IF NOT EXISTS not_learn_url(url text, b_id int);"; 
-	if (RET::SUC != m_DbAdmin.ExecSql(Sql))
+	if (RET::SUC != m_DbAdmin.execSql(Sql))
 	{
 		return RET::FAIL;
 	}

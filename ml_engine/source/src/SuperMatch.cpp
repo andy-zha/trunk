@@ -9,7 +9,7 @@ SuperMatch::~SuperMatch()
 {}
 
 /** 构建状态机 **/
-int32_t SuperMatch::Build(std::vector<std::string> pattern)
+int32_t SuperMatch::build(std::vector<std::string> pattern)
 {
 	//异常判断
 	if (pattern.empty()) {
@@ -45,7 +45,7 @@ int32_t SuperMatch::Build(std::vector<std::string> pattern)
 			}
 
 			//向右查找结点，查不到添加右结点，并从当前结点开始建立左子树
-			if (RET::SUC != FindPattern((*iter)[uIndex], pCurNode))
+			if (RET::SUC != findPattern((*iter)[uIndex], pCurNode))
 			{
 				bFlag = true;
 				BinaryTree<NS_SUPERMATCH::Pattern> *pNode = nullptr;
@@ -74,7 +74,7 @@ int32_t SuperMatch::Build(std::vector<std::string> pattern)
 }
 
 /** 查找字符模式结点 **/
-int32_t SuperMatch::FindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode)
+int32_t SuperMatch::findPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode)
 {
 	//向右进行遍历
 	BinaryTree<NS_SUPERMATCH::Pattern> *pNode = nullptr;
@@ -99,13 +99,13 @@ int32_t SuperMatch::FindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pC
 }
 
 /** 模式完全匹配 **/
-int32_t SuperMatch::MatchPattern(std::string str)
+int32_t SuperMatch::matchPattern(std::string str)
 {
 	std::string::iterator iter = str.begin();
 	BinaryTree<NS_SUPERMATCH::Pattern> *pCurNode = nullptr;
 	for (; iter < str.end(); iter++) {
 		//当前结点右子树查找
-		if (RET::SUC != FindPattern(*iter, pCurNode))
+		if (RET::SUC != findPattern(*iter, pCurNode))
 		{
 			return RET::FAIL;
 		}
@@ -123,13 +123,13 @@ int32_t SuperMatch::MatchPattern(std::string str)
 }
 
 /** 模式子串匹配 **/
-int32_t SuperMatch::SubMatchPattern(std::string str)
+int32_t SuperMatch::subMatchPattern(std::string str)
 {
 	std::string::iterator iter = str.begin();
 	BinaryTree<NS_SUPERMATCH::Pattern> *pCurNode = nullptr;
 	for (; iter < str.end(); iter++) {
 		//当前结点右子树查找
-		if (RET::SUC != FindPattern(*iter, pCurNode))
+		if (RET::SUC != findPattern(*iter, pCurNode))
 		{
 			return RET::FAIL;
 		}
@@ -142,13 +142,13 @@ int32_t SuperMatch::SubMatchPattern(std::string str)
 }
 
 /** 模式模糊匹配(*) **/
-int32_t SuperMatch::FuzzyMatchPattern(std::string str)
+int32_t SuperMatch::fuzzyMatchPattern(std::string str)
 {
 	std::string::iterator iter = str.begin();
 	BinaryTree<NS_SUPERMATCH::Pattern> *pCurNode = nullptr;
 	for (; iter < str.end(); iter++) {
 		//当前结点右子树查找
-		if (RET::SUC != FindPattern(*iter, pCurNode))
+		if (RET::SUC != findPattern(*iter, pCurNode))
 		{
 			if ('*' == pCurNode->m_tree_data.m_ch)
 			{
@@ -171,7 +171,8 @@ int32_t SuperMatch::FuzzyMatchPattern(std::string str)
 }
 
 /** 查找字符模式结点(不区分大小写) **/
-int32_t SuperMatch::SoftFindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode)
+int32_t SuperMatch::softFindPattern(char ch, 
+				BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode)
 {
 	//向右进行遍历
 	BinaryTree<NS_SUPERMATCH::Pattern> *pNode = nullptr;
@@ -197,13 +198,13 @@ int32_t SuperMatch::SoftFindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> 
 }
 
 /** 模式完全匹配 **/
-int32_t SuperMatch::SoftMatch(std::string str)
+int32_t SuperMatch::softMatch(std::string str)
 {
 	std::string::iterator iter = str.begin();
 	BinaryTree<NS_SUPERMATCH::Pattern> *pCurNode = nullptr;
 	for (; iter < str.end(); iter++) {
 		//当前结点右子树查找
-		if (RET::SUC != SoftFindPattern(*iter, pCurNode))
+		if (RET::SUC != softFindPattern(*iter, pCurNode))
 		{
 			return RET::FAIL;
 		}
@@ -221,13 +222,13 @@ int32_t SuperMatch::SoftMatch(std::string str)
 }
 
 /** 模式子串匹配 **/
-int32_t SuperMatch::SoftSubMatch(std::string str)
+int32_t SuperMatch::softSubMatch(std::string str)
 {
 	std::string::iterator iter = str.begin();
 	BinaryTree<NS_SUPERMATCH::Pattern> *pCurNode = nullptr;
 	for (; iter < str.end(); iter++) {
 		//当前结点右子树查找
-		if (RET::SUC != SoftFindPattern(*iter, pCurNode))
+		if (RET::SUC != softFindPattern(*iter, pCurNode))
 		{
 			return RET::FAIL;
 		}
@@ -240,13 +241,13 @@ int32_t SuperMatch::SoftSubMatch(std::string str)
 }
 
 /** 模式模糊匹配(*) **/
-int32_t SuperMatch::SoftFuzzyMatch(std::string str)
+int32_t SuperMatch::softFuzzyMatch(std::string str)
 {
 	std::string::iterator iter = str.begin();
 	BinaryTree<NS_SUPERMATCH::Pattern> *pCurNode = nullptr;
 	for (; iter < str.end(); iter++) {
 		//当前结点右子树查找
-		if (RET::SUC != SoftFindPattern(*iter, pCurNode))
+		if (RET::SUC != softFindPattern(*iter, pCurNode))
 		{
 			if ('*' == pCurNode->m_tree_data.m_ch)
 			{
@@ -268,11 +269,11 @@ int32_t SuperMatch::SoftFuzzyMatch(std::string str)
 	return RET::SUC;
 }
 
-int32_t SuperMatch::Sort2Swap()
+int32_t SuperMatch::sort2Swap()
 {}
 
 /** 销毁状态机 **/
-int32_t SuperMatch::Destroy()
+int32_t SuperMatch::destroy()
 {
 	return RET::SUC;
 }

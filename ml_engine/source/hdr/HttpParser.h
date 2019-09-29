@@ -5,6 +5,7 @@
 #include "MemoryDefine.h"
 #include "InputPacket.h"
 #include "IPDRuleMgr.h"
+#include "SuperMatch.h"
 #include "Timer.h"
 #include "picohttpparser.h"
 #include "StrProc.h"
@@ -87,7 +88,7 @@ class HttpParser
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t Init();
+		int32_t init();
 
 		/**
 		 * @brief 解析器入口
@@ -96,7 +97,7 @@ class HttpParser
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t Start(InputPacket *pInputPkt);
+		int32_t start(InputPacket *pInputPkt);
 
 #ifdef _GTEST_
 	public:
@@ -110,7 +111,7 @@ class HttpParser
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ParserUri(std::string uri, InputPacket *pInputPkt);
+		int32_t parserUri(std::string uri, InputPacket *pInputPkt);
 	
 		/**
 		 * @brief 过滤url请求参数
@@ -119,25 +120,25 @@ class HttpParser
 		 *
 		 * @return 过滤结果
 		 */
-		std::string FilterUrl(std::string url);
+		std::string filterUrl(std::string url);
 
 		/**
 		 * @brief 解析query
 		 *
-		 * @prame query
+		 * @prame pInputPkt
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ParserQuery(std::string query);
+		int32_t parserQuery(InputPacket *pInputPkt);
 
 		/**
 		 * @brief 解析cookie
 		 *
-		 * @prame cookie
+		 * @prame cookie pInputPkt
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ParserCookie(std::string cookie);
+		int32_t parserCookie(std::string cookie, InputPacket *pInputPkt);
 
 		/**
 		 * @brief 解析http body
@@ -146,13 +147,20 @@ class HttpParser
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ParserBody(std::string http_body);
+		int32_t parserBody(std::string http_body, InputPacket *pInputPkt);
+
+		/**
+		 * @brief supermatch 初始化
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t superMatchInit();
 
 	private:
 		/**
-		 * @brief 数据库操作对象
+		 * @brief 通用状态机 
 		 */
-		DbAdmin db;
+		SuperMatch super;
 };
 
 #endif

@@ -15,6 +15,7 @@ namespace NS_CONFIG
 		EM_CFGID_START = -1,                //枚举保护
 		EM_CFGID_SERVER_IP = 0,             //服务端ip
 		EM_CFGID_SERVER_PORT,               //服务端port
+		EM_CFGID_QUEUE_MAX_SIZE,            //缓冲区最大长度
 		EM_CFGID_SITE_MAX_NUM,              //站点最大数
 		EM_CFGID_END                        //枚举保护
 	}EM_CFGID;
@@ -30,10 +31,15 @@ namespace NS_CONFIG
 //配置信息数组
 static const NS_CONFIG::CfgInfo g_stCfgInfo[] = {
 	//Processor
+	//服务端ip
 	{NS_CONFIG::EM_CFGID_SERVER_IP, "../etc/ml.json", {"PROCESSOR", "SERVER_IP", (const char *)0}},
+	//服务端port
 	{NS_CONFIG::EM_CFGID_SERVER_PORT, "../etc/ml.json", {"PROCESSOR", "SERVER_PORT", (const char *)0}},
+	//缓冲区最大长度
+	{NS_CONFIG::EM_CFGID_QUEUE_MAX_SIZE, "../etc/ml.json", {"PROCESSOR", "QUEUE_MAX_SIZE", (const char *)0}},
 
 	//IPDRuleMgr
+	//站点最大值
 	{NS_CONFIG::EM_CFGID_SITE_MAX_NUM, "../etc/ml.json", {"IPDRULEMGR", "SITE_MAX_NUM", (const char *)0}},
 };
 
@@ -80,7 +86,7 @@ class Config
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		static int32_t GetCfg(NS_CONFIG::EM_CFGID CfgId, int32_t &iValue);
+		static int32_t getCfg(NS_CONFIG::EM_CFGID CfgId, int32_t &iValue);
 
 		/**
 		 * @brief 获取配置值(string型)
@@ -89,7 +95,7 @@ class Config
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		static int32_t GetCfg(NS_CONFIG::EM_CFGID CfgId, std::string &Value);
+		static int32_t getCfg(NS_CONFIG::EM_CFGID CfgId, std::string &Value);
 
 		/**
 		 * @brief 获取文件流

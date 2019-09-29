@@ -128,7 +128,6 @@ namespace NS_IPDRULE
 			{
 				m_SiteKey = 0;
 				m_Cycle = 0;
-				m_LearnStatus = -1;
 				m_Port = 0;
 				m_Degree = 0.0;
 			}
@@ -166,7 +165,6 @@ namespace NS_IPDRULE
 		public:
 			uint8_t m_SiteKey;									//站点键值
 			uint8_t m_Cycle;									//学习周期
-			int8_t m_LearnStatus;								//学习状态
 			uint16_t m_Port;                                    //注册port
 			float m_Degree;                                     //业务匹配度
 			std::string m_Ip;                                   //注册ip
@@ -216,7 +214,7 @@ class IPDRuleMgr
 		 *
 		 * @return 返回单例
 		 */
-		static IPDRuleMgr GetInstance()
+		static IPDRuleMgr getInstance()
 		{
 			static IPDRuleMgr _Instance;
 			return _Instance;
@@ -232,7 +230,7 @@ class IPDRuleMgr
 		/**
 		 * @brief 处理接口
 		 */
-		void Process();
+		void process();
 
 		/**
 		 * @brief 规则匹配接口

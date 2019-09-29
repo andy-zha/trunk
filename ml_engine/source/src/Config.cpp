@@ -9,7 +9,7 @@ Config::~Config()
 {}
 
 //获取配置值
-int32_t Config::GetCfg(NS_CONFIG::EM_CFGID CfgId, int32_t &iValue)
+int32_t Config::getCfg(NS_CONFIG::EM_CFGID CfgId, int32_t &iValue)
 {
 	//异常判断
 	if (CfgId >= NS_CONFIG::EM_CFGID_END 
@@ -60,7 +60,7 @@ int32_t Config::GetCfg(NS_CONFIG::EM_CFGID CfgId, int32_t &iValue)
 }
 
 //获取配置值(string)
-int32_t Config::GetCfg(NS_CONFIG::EM_CFGID CfgId, std::string &Value)
+int32_t Config::getCfg(NS_CONFIG::EM_CFGID CfgId, std::string &Value)
 {
 	//异常判断
 	if (CfgId >= NS_CONFIG::EM_CFGID_END 

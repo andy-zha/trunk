@@ -75,7 +75,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t Build(std::vector<std::string> pattern);
+		int32_t build(std::vector<std::string> pattern);
 
 		/**
 		 * @brief 查找字符模式 
@@ -84,7 +84,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t FindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode);
+		int32_t findPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode);
 
 		/**
 		 * @brief 模式完全匹配
@@ -93,7 +93,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t MatchPattern(std::string str);
+		int32_t matchPattern(std::string str);
 
 		/**
 		 * @brief 模式子串匹配
@@ -102,7 +102,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t SubMatchPattern(std::string str);
+		int32_t subMatchPattern(std::string str);
 
 		/**
 		 * @brief 模式模糊匹配
@@ -111,7 +111,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t FuzzyMatchPattern(std::string str);
+		int32_t fuzzyMatchPattern(std::string str);
 
 		/**
 		 * @brief 查找字符模式(不区分大小写) 
@@ -120,7 +120,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t SoftFindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode);
+		int32_t softFindPattern(char ch, BinaryTree<NS_SUPERMATCH::Pattern> *&pCurNode);
 
 		/**
 		 * @brief 模式完全匹配(不区分大小写)
@@ -129,7 +129,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t SoftMatch(std::string str);
+		int32_t softMatch(std::string str);
 
 		/**
 		 * @brief 模式子串匹配(不区分大小写)
@@ -138,7 +138,7 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t SoftSubMatch(std::string str);
+		int32_t softSubMatch(std::string str);
 
 		/**
 		 * @brief 模式模糊匹配(不区分大小写)
@@ -147,21 +147,21 @@ class SuperMatch
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t SoftFuzzyMatch(std::string str);
+		int32_t softFuzzyMatch(std::string str);
 
 		/**
  		 * @brief 排序整合
  		 *
  		 * @return RET::SUC 成功; RET::FAIL 失败
  		 */
-		int32_t Sort2Swap();
+		int32_t sort2Swap();
 
 		/**
  		 * @brief 销毁状态机
  		 *
  		 * @return RET::SUC 成功; RET::FAIL 失败
  		 */
-		int32_t Destroy();
+		int32_t destroy();
 
 	private:
 		/**

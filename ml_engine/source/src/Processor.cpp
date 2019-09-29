@@ -1,371 +1,214 @@
 #include "Processor.h"
 
-//构造函数
+/** 构造函数 **/
 Processor::Processor()
 {
-	m_Run = false;
-	m_ServerPort = 0;
-	m_Fd = -1;
-	m_Epfd = -1;
-	m_EpollTimeout = 0;
-	m_EpollWait = 0;
-	m_AcceptFailed = 0;
+	m_run = false;
+	m_queueMaxSize = 0;
+	m_pktNull = 0;
+	m_parserFailed = 0;
+	m_execQueryFailed = 0;
+	m_connectDbFailed = 0;
+	m_proTotal = 0;
+	m_proSuc = 0;
+	m_deletePkt = 0;
 }
 
-//析构函数
+/** 析构函数 **/
 Processor::~Processor()
-{}
-
-//初始化接口
-int32_t Processor::Init()
 {
-	if (RET::SUC != _Parser.Init())
-	{
+}
+
+/** 初始化接口 **/
+int32_t Processor::init()
+{
+	//http解析器初始化
+	if (RET::SUC != _parser.init()) {
+		std::cout<<"HttpParser init failed!"<<std::endl;
 		return RET::FAIL;
 	}
 
-	//读取服务端ip
-	if (RET::SUC != Config::GetCfg(NS_CONFIG::EM_CFGID_SERVER_IP, m_ServerIp))
+	int32_t iValue = 0;
+	if (RET::SUC != Config::getCfg(NS_CONFIG::EM_CFGID_QUEUE_MAX_SIZE, iValue))
 	{
-		std::cout<<"Processor: Read Server Ip Failed!"<<std::endl;
-		return RET::FAIL;	
-	}
-
-	//读取服务端port
-	int32_t iValue = -1;
-	if (RET::SUC != Config::GetCfg(NS_CONFIG::EM_CFGID_SERVER_PORT, iValue))
-	{
-		std::cout<<"Processor: Read Server Port Failed!"<<std::endl;
-		return RET::FAIL;	
-	}
-	m_ServerPort = iValue;
-
-	//初始化套接字
-	if (RET::SUC != SocketInit())
-	{
+		std::cout<<"Processor: Read queue max size failed!"<<std::endl;
 		return RET::FAIL;
 	}
-	
-	//epoll初始化
-	if (RET::SUC != EpollInit())
-	{
-		return RET::FAIL;
-	}
+	m_queueMaxSize = iValue < QUEUE_MAX_SIZE ? iValue : QUEUE_MAX_SIZE;
 
 	return RET::SUC;
 }
 
-int32_t Processor::SocketInit()
+/** 启动接口 **/
+int32_t Processor::start()
 {
-	if ((m_Fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		std::cout<<"Processor: Socket Init Failed!"<<std::endl;
-		return RET::FAIL;
-	}
+	//唤醒线程状态
+	m_run = true;
 
-	//设置非阻塞
-	if (RET::SUC != SetNoBlock(m_Fd))
-	{
-		return RET::FAIL;
-	}	
-
-	int32_t opt = 1;
-	setsockopt(m_Fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-	struct sockaddr_in sock_addr;
-	sock_addr.sin_family = AF_INET;
-	sock_addr.sin_port = htons(m_ServerPort);
-	sock_addr.sin_addr.s_addr = inet_addr(m_ServerIp.c_str());
-
-	//bind绑定
-	if ((bind(m_Fd, (struct sockaddr*)&sock_addr, sizeof(sock_addr))) < 0)
-	{
-		std::cout<<"Processor: Bind Failed!"<<std::endl;
-		return RET::FAIL;
-	}
-
-	//监听
-	if ((listen(m_Fd, NS_ACCEPTOR::LISTEN_NUM)) < 0)
-	{
-		std::cout<<"Processor: Listen Failed!"<<std::endl;
-		return RET::FAIL;
-	}
+	//启动线程
+	m_thread = std::thread(std::bind(&Processor::process, this));
 
 	return RET::SUC;
 }
 
-int32_t Processor::SetNoBlock(int32_t fd)
+/** 线程处理函数 **/
+void Processor::process()
 {
-	int32_t fd_flag = fcntl(fd, F_GETFL);
-	if (fcntl(fd, F_SETFL, fd_flag|O_NONBLOCK) < 0)
-	{
-		std::cout<<"Processor: fcntl Failed!"<<std::endl;
-		return RET::FAIL;
-	}
+	while (m_run) {
+		std::cout<<"processor"<<std::endl;
+		//规则加载
+		IPDRuleMgr::getInstance().process();
 
-	return RET::SUC;
-}
+		//输出日志
+		writeLog();
 
-//epoll初始化
-int32_t Processor::EpollInit()
-{
-	m_Epfd = epoll_create(NS_ACCEPTOR::EPOLL_CREATE_MAX);
-	if (m_Epfd < 0)
-	{
-		return RET::FAIL;
-	}
+		//内存检查
+//#ifdef _MEMCHECK_
+//		memCheck();
+//#endif
 
-	ev.events = EPOLLIN|EPOLLET;
-	ev.data.ptr = Alloc(m_Fd);
-	if (epoll_ctl(m_Epfd, EPOLL_CTL_ADD, m_Fd, &ev) < 0)
-	{
-		m_EpollCtlFailed++;
-		return RET::FAIL;
-	} 
-
-	return RET::SUC;
-}
-
-//内存分配
-NS_ACCEPTOR::epoll_buf *Processor::Alloc(int32_t fd)
-{
-	NS_ACCEPTOR::epoll_buf *ret = nullptr;
-	try
-	{
-		ret = new NS_ACCEPTOR::epoll_buf();
-	}
-	catch(std::bad_alloc)
-	{
-		return nullptr;
-	}
-
-	ret->fd = fd;
-	return ret;
-}
-
-void Processor::Free(NS_ACCEPTOR::epoll_buf *ptr)
-{
-	if (nullptr != ptr)
-	{
-		delete ptr;
-		ptr = nullptr;
-	}
-}
-
-int32_t Processor::Start()
-{
-	m_Run = true;
-	Accept();
-	return RET::SUC;
-}
-
-//线程处理函数
-void Processor::Accept()
-{
-	InputPacket *pInputPkt = nullptr;
-	while (m_Run)
-	{
-		//加载业务规则
-		IPDRuleMgr::GetInstance().Process();
-
-#ifdef _MEMCHECK_
-		MemCheck();
-#endif
-
-		try
-		{
-			if (nullptr == pInputPkt)
-			{
-				pInputPkt = new InputPacket();
-			}
-		}
-		catch(std::bad_alloc)
-		{
-			std::cout<<"Processor: New InputPacket Error!"<<std::endl;
+		//判断队列是否为空，空则线程休眠5秒
+		if (_queue.empty()) {
+			sleep(5);
 			continue;
 		}
 
-		int32_t iRev = epoll_wait(m_Epfd, env, 32, 10000);
-		switch (iRev)
-		{
-			case 0:
-				m_EpollTimeout++;
-				break;
-			case -1:
-				m_EpollWait++;
-				break;
-			default:
-			{
-				for (int32_t Index = 0; Index < iRev; Index++)
-				{
-					NS_ACCEPTOR::epoll_buf *buf = (NS_ACCEPTOR::epoll_buf*)env[Index].data.ptr;
-					if (buf->fd == m_Fd && env[Index].events & EPOLLIN)
-					{
-						struct sockaddr_in client;
-						socklen_t Len = sizeof(client);
-						int32_t sock = accept(m_Fd, (struct sockaddr*)&client, &Len);
-						while (sock > 0)
-						{
-							SetNoBlock(sock);
-							ev.events = EPOLLIN|EPOLLET;
-							pEndfree = ev.data.ptr;
-							ev.data.ptr = Alloc(sock);
-							if (epoll_ctl(m_Epfd, EPOLL_CTL_ADD, sock, &ev) < 0)
-							{
-								m_EpollCtlFailed++;
-								break;
-							}
-							
-							pInputPkt->m_ClientIp = inet_ntoa(client.sin_addr);
-							pInputPkt->m_ClientPort = ntohs(client.sin_port);
-						}
+		//取出数据体
+		InputPacket *pInputPkt = _queue.front();
+		m_proTotal++;
 
-						if (0 > sock)
-						{
-							m_AcceptFailed++;
-						}
-						continue;
-					}
-					else if (env[Index].events & EPOLLIN)
-					{
-						Read(buf, &env[Index], pInputPkt);
-						_Parser.Start(pInputPkt);
-						if (nullptr != pInputPkt)
-						{
-							delete pInputPkt;
-							pInputPkt = nullptr;
-						}
-					}
-					else
-					{
-						Write(buf);
-					}
+		//异常判断
+		if (nullptr == pInputPkt) {
+			_queue.pop();
+			m_pktNull++;
+			continue;
+		}
 
-				}//end for
-				break;
+		//解析
+		if (RET::SUC != _parser.start(pInputPkt)) {
+			_queue.pop();
+
+			//释放内存
+			if (nullptr != pInputPkt) {
+				delete pInputPkt;
+				pInputPkt = nullptr;
 			}
-		}//end switch
-	}//end while
+			
+			m_parserFailed++;
+			continue;
+		}
+
+		_queue.pop();
+		m_proSuc++;
+		//释放内存
+		if (nullptr != pInputPkt) {
+			delete pInputPkt;
+			pInputPkt = nullptr;	
+		}
+	}
 }
 
-//接收http请求
-void Processor::Read(NS_ACCEPTOR::epoll_buf *buf, struct epoll_event *ev_arr, InputPacket *pInputPkt)
-{
-	int32_t res = -1;
-	//读取http上行内容
-	if ((res = read(buf->fd, buf->Buf, NS_ACCEPTOR::ACCEPT_SIZE)) > 0)
-	{
-		try
-		{
-			pInputPkt->pStr = (char*)_MEM_NEW_(res + 1);
-		}
-		catch(std::bad_alloc)
-		{
-			return;
-		}
-		_MEM_CPY_(pInputPkt->pStr, buf->Buf, res);
-		_MEM_ZERO_(pInputPkt->pStr, res + 1, res);
-		pInputPkt->uLength = res;
-		fflush(stdout);
-	}
-
-	if (res == 0)
-	{
-		fflush(stdout);
-		if (epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, nullptr) < 0)
-		{
-			m_EpollCtlFailed++;
-			return;
-		}
-		close(buf->fd);
-	}
-
-	if(res < 0 && errno != EAGAIN)
-	{
-		return;
-	}
-
-	struct epoll_event e;
-    e.events = ev_arr->events|EPOLLOUT; //这步是为了将关心的事件改为即关心读又关心写 
-    e.data.ptr = buf;
-	if (epoll_ctl(m_Epfd, EPOLL_CTL_MOD, buf->fd, &e) < 0)
-	{
-		m_EpollCtlFailed++;
-	}
-
-	return;
-}
-
-//给出http下行响应
-void Processor::Write(NS_ACCEPTOR::epoll_buf *buf)
-{
-	const char * temp ="HTTP/1.1 200 OK\r\n Content-Length :%s \r\n\r\n Hello world! ";
-	int ret= sprintf(buf->Buf, "%s", temp);
-	write(buf->fd, buf->Buf, ret);
-	epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, nullptr);
-	close(buf->fd);
-	Free((NS_ACCEPTOR::epoll_buf*)ev.data.ptr);
-	Free((NS_ACCEPTOR::epoll_buf*)pEndfree);
-}
-
-void Processor::WriteLog()
+/** 输出日志函数 **/
+void Processor::writeLog()
 {
 	std::ofstream io;
-	io.open("/data/logs/ml_engine/ml.log", std::ios::app);
-
-	//输出日志头
 	time_t nowtime = time(NULL);
 	struct tm *local = localtime(&nowtime);
-	std::string log = "ML_ENGINE[" + std::to_string(getpid()) + "] " 
-			+ std::to_string(local->tm_year + 1900) + "/" 
-			+ std::to_string(local->tm_mon + 1)	+ "/"
-			+ std::to_string(local->tm_mday) + " "
-			+ std::to_string(local->tm_hour) + ":"
-			+ std::to_string(local->tm_min) + ":"
-			+ std::to_string(local->tm_sec);
-	io<<log<<std::endl;
+	std::string log_path = "/data/logs/ml_engine/ml_" 
+			+ std::to_string(local->tm_year + 1900) + "."
+			+ std::to_string(local->tm_mon + 1) + "."
+			+ std::to_string(local->tm_mday) + "_"
+			+ std::to_string(getpid()) + ".log";
+	io.open(log_path, std::ios::app);
 
-	//输出处理模块日志
+	//输出日志头
+	char header[1024];
+	snprintf(header, 1024, "ML_ENGINE[%d] %04d/%02d/%02d %02d:%02d:%02d", getpid(),
+					local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
+					local->tm_hour, local->tm_min, local->tm_sec);
+	io<<header<<std::endl;
+
 	std::string pro_log;
-	SprintfLogStream(pro_log);
+	//输出主处理模块日志
+	sprintfLogStream(pro_log);
+	io<<pro_log<<std::endl;
+	//输出接收模块日志
+	Accepter::getInstance().sprintfLogStream(pro_log);
 	io<<pro_log<<std::endl;
 	
 	io<<std::endl<<std::endl;
+	io.close();
 }
 
-void Processor::SprintfLogStream(std::string &log)
+/** 线程join **/
+void Processor::threadJoin()
 {
-	log = "Processor: EpollTimeout[" + std::to_string(m_EpollTimeout)
-			+ "] EpollWait[" + std::to_string(m_EpollWait)
-			+ "] AcceptFailed[" + std::to_string(m_AcceptFailed)
-			+ "] EpollCtlFailed[" + std::to_string(m_EpollCtlFailed)
+	m_thread.join();
+}
+
+/** push数据到缓冲区 **/
+int32_t Processor::pushData(InputPacket *pInputPkt)
+{
+	if (_queue.size() > m_queueMaxSize) {
+		m_deletePkt++;
+		return RET::FAIL;
+	}
+
+	_queue.push(pInputPkt);
+	return RET::SUC;
+}
+
+/** 输出日志接口 **/
+void Processor::sprintfLogStream(std::string &log)
+{
+	log = "Processor: ProTotal[" + std::to_string(m_proTotal)
+			+ "] ProSuc[" + std::to_string(m_proSuc)
+			+ "] ParserFailed[" + std::to_string(m_parserFailed)
+			+ "] PktNull[" + std::to_string(m_pktNull)
+			+ "] DeletePkt[" + std::to_string(m_deletePkt)
+			+ "] ConnectDbFailed[" + std::to_string(m_connectDbFailed)
+			+ "] ExecQueryFailed[" + std::to_string(m_execQueryFailed)
 			+ "]";
 }
 
+/** 内存检测函数 **/
 #ifdef _MEMCHECK_
 
-void Processor::MemCheck()
+void Processor::memCheck()
 {
 	DbAdmin m_db;
-	m_db.Connect();
+	//数据库连接
+	if (RET::SUC != m_db.connect()) {
+		m_connectDbFailed++;
+		return;
+	}
 	
+	//查询工具开关状态
 	MYSQL_RES *pResult = nullptr;
 	std::string Sql = "SELECT memcheck FROM cmd;";
-	m_db.ExecQuery(Sql, pResult);
+	if (RET::SUC != m_db.execQuery(Sql, pResult))
+	{
+		m_execQueryFailed++;
+		m_db.close();
+		return;
+	}
 
-	if (nullptr != pResult && 0 != mysql_num_rows(pResult))
+	//判断开关
+	if (nullptr != pResult && 0 != mysql_num_rows(pResult)
+					&& 1 == mysql_num_fields(pResult))
 	{
 		MYSQL_ROW row = mysql_fetch_row(pResult);
 		if (1 == std::stoul(row[0]))
 		{
 			MemCheck::GetInstance().WriteLog();
 			Sql = "UPDATE cmd SET memcheck = 0;";
-			m_db.ExecSql(Sql);
+			m_db.execSql(Sql);
 		}
 	}
 
 	mysql_free_result(pResult);
 	pResult = nullptr;	
-	m_db.Close();
+	m_db.close();
 }
 
 #endif

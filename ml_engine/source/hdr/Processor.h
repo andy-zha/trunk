@@ -1,78 +1,21 @@
 #ifndef _PROCESSOR_H_
 #define _PROCESSOR_H_
 
-#include "RetCodeDefine.h"
-#include "MemoryDefine.h"
-#include "InputPacket.h"
+#include "IPDRuleMgr.h"
 #include "HttpParser.h"
-#include "Config.h"
-#include "Timer.h"
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/epoll.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <fcntl.h>
+#include "Accepter.h"
 #include <unistd.h>
-#include <dmalloc.h>
+#include <queue>
 #include <thread>
 
-namespace NS_ACCEPTOR
-{
-	//监听数量
-	static const uint32_t LISTEN_NUM = 1024;
-	//EPOLL创建最大数
-	static const uint32_t EPOLL_CREATE_MAX = 256;
-	//接收字节数
-	static const uint32_t ACCEPT_SIZE = 4096;
-
-	//epoll buf
-	typedef struct epoll_buf
-	{
-		public:
-			epoll_buf()
-			{}
-
-			~epoll_buf()
-			{}
-
-			/**
-			 * @brief 重载 内存分配
-			 *
-			 * @prame size 内存大小
-			 *
-			 * @return 内存地址
-			 */
-			static void * operator new(size_t size)
-			{
-					void *p = (void*)_MEM_NEW_(size);
-					return p;
-			}
-
-			/**
-			 * @brief 重载 内存释放
-			 *
-			 * @prame p 释放地址
-			 */
-			static void operator delete(void *p)
-			{
-					_MEM_DEL_(p);
-			}
-
-		public:
-			int32_t fd;
-	 		char Buf[NS_ACCEPTOR::ACCEPT_SIZE];
-	}epoll_buf;
-}
+#define QUEUE_MAX_SIZE 1000
 
 class Processor
 {
 	public:
 		/**
- 		 * @brief 析构函数
- 		 */
+		 * @brief 析构函数
+		 */
 		~Processor();
 
 		/**
@@ -90,7 +33,7 @@ class Processor
 		 *
 		 * @return 返回单例
 		 */
-		static Processor &GetInstance()
+		static Processor &getInstance()
 		{
 			static Processor Instance;
 			return Instance;
@@ -120,163 +63,121 @@ class Processor
 		}
 
 		/**
- 		 * @brief 初始化接口
- 		 *
- 		 * @return RET::SUC 成功; RET::FAIL 失败
- 		 */
-		int32_t Init();
+		 * @brief 初始化接口
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t init();
 
 		/**
 		 * @brief 启动接口
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t Start();
-
-	private:
-		/**
- 		 * @brief 构造函数
- 		 */
-		Processor();
+		int32_t start();
 
 		/**
-		 * @brief 套接字初始化
+		 * @brief 线程join
+		 */
+		void threadJoin();
+
+		/**
+		 * @brief push数据
+		 *
+		 * @prame pInputPkt 数据包
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t SocketInit();
-
-		/**
-		 * @brief 设置非阻塞状态
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
-		 */
-		int32_t SetNoBlock(int32_t fd);
-
-		/**
-		 * @brief Epoll初始化		 *
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
-		 */
-		int32_t EpollInit();
-
-		/**
-		 * @brief 内存分配
-		 *
-		 * @return 指针
-		 */
-		NS_ACCEPTOR::epoll_buf *Alloc(int32_t fd);
-
-		/**
-		 * @brief 内存释放
-		 *
-		 * @return 指针
-		 */
-		void Free(NS_ACCEPTOR::epoll_buf *ptr);
-
-		/**
- 		 * @brief 线程处理函数
- 		 */
-		void Accept();
-
-		/**
- 		 * @brief 读取
- 		 *
- 		 * @prame buf ev_arr
- 		 */
-		void Read(NS_ACCEPTOR::epoll_buf *buf, struct epoll_event *ev_arr, InputPacket *pInputPkt);
-
-		/**
- 		 * @brief 响应
- 		 *
- 		 * @prame buf ev_arr
- 		 */
-		void Write(NS_ACCEPTOR::epoll_buf *buf);
-
-		/**
-		 * @brief 写日志函数
-		 */
-		void WriteLog();
+		int32_t pushData(InputPacket *pInputPkt);
 
 		/**
 		 * @brief 封装日志流
 		 *
 		 * @prame log 日志流
 		 */
-		void SprintfLogStream(std::string &log);
-
-#ifdef _MEMCHECK_
-		/**
- 		 * @brief 内存泄漏检查
- 		 */
-		void MemCheck();
-#endif
+		void sprintfLogStream(std::string &log);
 
 	private:
 		/**
-		 * @brief http解析器
+		 * @brief 构造函数
 		 */
-		HttpParser _Parser;
+		Processor();
 
 		/**
- 		 * @brief 线程运行状态
+		 * @brief 线程处理接口
+		 */
+		void process();
+
+		/**
+		 * @brief 日志接口
+		 */
+		void writeLog();
+
+		/**
+		 * @brief 内存检测接口
+		 */
+		void memCheck();
+
+	private:
+		/**
+		 * @brief 线程状态
+		 */
+		bool m_run;
+
+		/**
+		 * @brief 丢列接收最大个数
+		 */
+		uint32_t m_queueMaxSize;
+
+		/**
+		 * @brief 数据包为空个数(日志信息)
+		 */
+		uint32_t m_pktNull;
+
+		/**
+ 		 * @brief 解析失败次数(日志信息)
  		 */
-		bool m_Run;
+		uint32_t m_parserFailed;
 
 		/**
- 		 * @brief 服务端Port
+ 		 * @brief 数据库连接失败次数(日志信息)
  		 */
-		uint32_t m_ServerPort;
+		uint32_t m_connectDbFailed;
 
 		/**
- 	     * @brief 服务端Ip
- 	     */
-		std::string m_ServerIp;
-
-		/**
- 		 * @brief 套接字
- 		 */
-		int32_t m_Fd;
-
-		/**
- 		 * @brief epoll创建fd
- 		 */
-		int32_t m_Epfd;
-
-		/**
-		 * @brief epoll事件
+		 * @brief 数据库查询失败次数(日志信息)
 		 */
-		struct epoll_event ev;
+		uint32_t m_execQueryFailed;
 
 		/**
-		 * @brief epoll事件数组
+		 * @brief 处理包总数(日志信息)
 		 */
-		struct epoll_event env[32];
+		uint32_t m_proTotal;
 
 		/**
-		 * @brief 托管内存
+		 * @brief 处理包成功个数(日志信息)
 		 */
-		void *pEndfree;
+		uint32_t m_proSuc;
 
 		/**
-		 * @brief epoll超时次数
+		 * @brief 丢包个数
 		 */
-		uint32_t m_EpollTimeout;
+		uint32_t m_deletePkt;
 
 		/**
-		 * @brief epoll等待次数
+		 * @brief 数据缓冲区
 		 */
-		uint32_t m_EpollWait;
+		std::queue<InputPacket*> _queue;
 
 		/**
-		 * @brief 连接失败次数
+		 * http解析器对象
 		 */
-		uint32_t m_AcceptFailed;
+		HttpParser _parser;
 
 		/**
-		 * @brief epollctl失败次数
+		 * @brief 线程对象
 		 */
-		uint32_t m_EpollCtlFailed;
+		std::thread m_thread;
 };
 
 #endif

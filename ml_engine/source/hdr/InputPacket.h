@@ -3,7 +3,56 @@
 
 #include "RetCodeDefine.h"
 #include "MemoryDefine.h"
+
 #define _READ_PACKET_
+
+namespace NS_INPUTPACKET
+{
+	class KeyValue
+	{
+		public:
+			/**
+			 * @brief 构造函数
+			 */
+			KeyValue() 
+			{}
+
+			/**
+			 * @brief 析构函数
+			 */
+			~KeyValue()
+			{}
+
+			/**
+			 * @brief 重载 内存分配
+			 *
+			 * @prame size 内存大小
+			 *
+			 * @return 内存地址
+			 */
+			static void * operator new(size_t size)
+			{
+				void *p = (void*)_MEM_NEW_(size);
+				return p;
+			}
+
+			/**
+			 * @brief 重载 内存释放
+			 *
+			 * @prame p 释放地址
+			 */
+			static void operator delete(void *p)
+			{
+				_MEM_DEL_(p);
+			}
+		
+		public:
+			std::string key;                            
+			std::string value;
+	};
+}
+
+/** 数据包结构 **/
 class InputPacket
 {
 	public:
@@ -13,11 +62,11 @@ class InputPacket
 		InputPacket()
 		{
 #ifdef _READ_PACKET_
-			pStr = nullptr;
 			uPayload = 0;
 			uOffset = 0;
 			uType = 0;
 #endif
+			pStr = nullptr;
 			uLength = 0;
 			MinorVer = -1;
 			m_ClientPort = 0;

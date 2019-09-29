@@ -30,8 +30,6 @@ namespace NS_DBADMIN
 		EM_BUSINESS_AD_REQNUM,                                 //自动删除的请求了阈值
 		EM_BUSINESS_AUDIT_AC,                                  //告警频率异常的动作
 		EM_BUSINESS_DEDIT_AC,                                  //阻断频率异常的动作
-		EM_BUSINESS_LEARNSTATUS,                               //业务学习状态
-		EM_BUSINESS_CHECKSTATUS,                               //业务检测状态
 		EM_BUSINESS_FEILD_END                                  //枚举保护
 	}EM_BUSINESSFEILD;
 }
@@ -77,14 +75,14 @@ class DbAdmin
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t Connect();
+		int32_t connect();
 
 		/**
 		 * @brief 断开连接接口
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t Close();
+		int32_t close();
 
 		/**
 		 * @brief 执行查询接口
@@ -93,7 +91,7 @@ class DbAdmin
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ExecQuery(std::string Sql, MYSQL_RES *&pResult);
+		int32_t execQuery(std::string Sql, MYSQL_RES *&pResult);
 
 		/**
 		 * @brief 执行接口
@@ -102,7 +100,7 @@ class DbAdmin
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t ExecSql(std::string Sql);
+		int32_t execSql(std::string Sql);
 
 		/**
 		 * @brief 执行查询接口(stmt)
@@ -111,7 +109,7 @@ class DbAdmin
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t StmtExecQuery(std::string Sql, std::vector<std::string> Vec,
+		int32_t stmtExecQuery(std::string Sql, std::vector<std::string> Vec,
 						uint32_t uCount, std::vector<std::vector<std::string>> &Res);
 
 		/**
@@ -121,7 +119,7 @@ class DbAdmin
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t StmtExecSql(std::string Sql, std::vector<std::string> Vec);
+		int32_t stmtExecSql(std::string Sql, std::vector<std::string> Vec);
 
 	private:
 		/**

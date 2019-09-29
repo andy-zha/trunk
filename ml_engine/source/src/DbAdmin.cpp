@@ -11,7 +11,7 @@ DbAdmin::~DbAdmin()
 {}
 
 //连接接口
-int32_t DbAdmin::Connect()
+int32_t DbAdmin::connect()
 {
 	try
 	{
@@ -31,7 +31,7 @@ int32_t DbAdmin::Connect()
 }
 
 //断开连接接口
-int32_t DbAdmin::Close()
+int32_t DbAdmin::close()
 {
 	if (nullptr == conn)
 	{
@@ -53,7 +53,7 @@ int32_t DbAdmin::Close()
 }
 
 //执行查询语句接口
-int32_t DbAdmin::ExecQuery(std::string Sql, MYSQL_RES *&pResult)
+int32_t DbAdmin::execQuery(std::string Sql, MYSQL_RES *&pResult)
 {
 	if (nullptr == conn)
 	{
@@ -77,7 +77,7 @@ int32_t DbAdmin::ExecQuery(std::string Sql, MYSQL_RES *&pResult)
 }
 
 //执行语句接口
-int32_t DbAdmin::ExecSql(std::string Sql)
+int32_t DbAdmin::execSql(std::string Sql)
 {
 	if (nullptr == conn)
 	{
@@ -99,7 +99,7 @@ int32_t DbAdmin::ExecSql(std::string Sql)
 	return RET::SUC;
 }
 
-int32_t DbAdmin::StmtExecQuery(std::string Sql, std::vector<std::string> Vec, 
+int32_t DbAdmin::stmtExecQuery(std::string Sql, std::vector<std::string> Vec, 
 				uint32_t uCount, std::vector<std::vector<std::string>> &Res)
 {
 	//异常判断
@@ -197,7 +197,7 @@ int32_t DbAdmin::StmtExecQuery(std::string Sql, std::vector<std::string> Vec,
 	return RET::SUC;
 }
 
-int32_t DbAdmin::StmtExecSql(std::string Sql, std::vector<std::string> Vec)
+int32_t DbAdmin::stmtExecSql(std::string Sql, std::vector<std::string> Vec)
 {
 	uint32_t param_count = Vec.size();
 	if (0 == param_count || nullptr == conn)
@@ -205,14 +205,14 @@ int32_t DbAdmin::StmtExecSql(std::string Sql, std::vector<std::string> Vec)
 		return RET::FAIL;
 	}
 
-	//初始化预处理环境句柄  MYSQL_STMT *stmt
+	//初始化预处理环境句柄MYSQL_STMT *stmt
 	MYSQL_STMT *stmt = mysql_stmt_init(conn);
 	if (nullptr == stmt)
 	{
 		return RET::FAIL;
 	}
 
-	//向预处理环境句柄stmt 中添加sql( 带有占位符)
+	//向预处理环境句柄stmt中添加sql(带有占位符)
 	if (mysql_stmt_prepare(stmt, Sql.c_str(), Sql.size()))
 	{
 		mysql_stmt_close(stmt);

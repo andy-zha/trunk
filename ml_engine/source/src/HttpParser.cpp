@@ -9,13 +9,13 @@ HttpParser::~HttpParser()
 {}
 
 //解析器初始化接口
-int32_t HttpParser::Init()
+int32_t HttpParser::init()
 {
 	return RET::SUC;
 }
 
 //解析器主入口
-int32_t HttpParser::Start(InputPacket *pInputPkt)
+int32_t HttpParser::start(InputPacket *pInputPkt)
 {
 	//异常判断
 	if (nullptr == pInputPkt || nullptr == pInputPkt->pStr
@@ -48,20 +48,19 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 	size_t MethodLen = 0;
 	size_t PathLen = 0;
 	size_t HeaderNum = 32;
-	size_t Ret = phr_parse_request(http_header.data(), http_header.size(), 
-					&pMethod, &MethodLen, &pPath, &PathLen, &pInputPkt->MinorVer, 
-					headers, &HeaderNum, 0);
-	if (-1 == Ret) {
+	if(-1 == phr_parse_request(http_header.data(), http_header.size(), &pMethod, 
+							&MethodLen, &pPath, &PathLen, &pInputPkt->MinorVer, 
+							headers, &HeaderNum, 0))
+	{
 		return RET::FAIL;
 	}
 
 	//取请求方法、Uri
 	pInputPkt->m_HttpMethod = std::string(pMethod, MethodLen);
-	std::string uri = std::string(pPath, PathLen);
+
 	//解析url
-	ParserUri(uri, pInputPkt);
-	std::cout<<"Uri: "<<pInputPkt->m_Url<<std::endl;
-	std::cout<<"Query: "<<pInputPkt->m_Query<<std::endl;
+	std::string uri = std::string(pPath, PathLen);
+	parserUri(uri, pInputPkt);
 
 	std::string cookie;
 	for (uint32_t uIndex = 0; uIndex < HeaderNum; uIndex++)
@@ -83,43 +82,40 @@ int32_t HttpParser::Start(InputPacket *pInputPkt)
 		}
  
 		//请求头内只取host与cookie
-		if (key == NS_HTTPPARSER::HOST)
-		{
+		if (key == NS_HTTPPARSER::HOST)	{
 			pInputPkt->m_Host = std::string(value, value.size());
 		}
 
-		if (key == NS_HTTPPARSER::COOKIE)
-		{
+		if (key == NS_HTTPPARSER::COOKIE) {
 			cookie = value;
 		}
 	}
 
 #ifndef _GTEST_
 	//过滤规则
-	if (RET::SUC != IPDRuleMgr::GetInstance().MatchRules(pInputPkt))
+	if (RET::SUC != IPDRuleMgr::getInstance().MatchRules(pInputPkt))
 	{
 		return RET::FAIL;
 	}
 #endif
 
 	//解析Query
-	ParserQuery(pInputPkt->m_Query);
+	parserQuery(pInputPkt);
 
 	//解析cookie体	
-	ParserCookie(cookie);
+	parserCookie(cookie, pInputPkt);
 
 	//解析http体
-	ParserBody(http_body);
+	parserBody(http_body, pInputPkt);
 
 	return RET::SUC;
 }
 
 //解析uri
-int32_t HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
+int32_t HttpParser::parserUri(std::string uri, InputPacket *pInputPkt)
 {
 	//size为0直接返回
-	if (0 == uri.size()) 
-	{
+	if (uri.empty()) {
 		return RET::FAIL;
 	}
 
@@ -155,13 +151,13 @@ int32_t HttpParser::ParserUri(std::string uri, InputPacket *pInputPkt)
 		}
 	}
 
-	pInputPkt->m_Url = FilterUrl(ParserUrl);
+	pInputPkt->m_Url = filterUrl(ParserUrl);
 
 	return RET::SUC;
 }
 
 //过滤url以分号为分隔符后面的请求数据
-std::string HttpParser::FilterUrl(std::string url)
+std::string HttpParser::filterUrl(std::string url)
 {
 	uint32_t uPos = url.find(';');
 	if (std::string::npos == uPos) {
@@ -173,19 +169,56 @@ std::string HttpParser::FilterUrl(std::string url)
 } 
 
 //解析请求行中的Query
-int32_t HttpParser::ParserQuery(std::string query)
+int32_t HttpParser::parserQuery(InputPacket *pInputPkt)
 {
-	if (query.empty()) {
+	//异常判断
+	if (nullptr == pInputPkt || pInputPkt->m_Query.empty()) 
+	{
 		return RET::SUC;
+	}
+
+	//解析query
+	std::string kv;
+	std::string key;
+	std::string value;
+	uint32_t uPos = 0;
+	uint32_t uOffset = 0;
+	uint32_t uLength = pInputPkt->m_Query.size();
+	while (uOffset < uLength) {
+		//切割结构
+		uPos = pInputPkt->m_Query.find("&", uOffset + 1);
+		kv = std::string(pInputPkt->m_Query, uOffset, uPos - uOffset - 1);
+
+		//偏移更新
+		uOffset = uPos;
+
+		//解析kv结构
+		uPos = kv.find("=");
+		if (std::string::npos == uPos) {
+			continue;
+		}
+
+		//取key值
+		std::string key = std::string(kv, 0, uPos);
+
+		//过滤不学习参数
+		if (RET::SUC == super.softFuzzyMatch(key)) {
+			continue;
+		}
+
+		//取value值
+		std::string value = std::string(kv, uPos + 1);
 	}
 
 	return RET::SUC;
 }
 
 //解析http请求头cookie体
-int32_t HttpParser::ParserCookie(std::string cookie)
+int32_t HttpParser::parserCookie(std::string cookie, InputPacket *pInputPkt)
 {
-	if (cookie.empty()) {
+	//异常判断
+	if (nullptr == pInputPkt || cookie.empty()) 
+	{
 		return RET::SUC;
 	}
 
@@ -193,12 +226,30 @@ int32_t HttpParser::ParserCookie(std::string cookie)
 }
 
 //解析http请求体
-int32_t HttpParser::ParserBody(std::string http_body)
+int32_t HttpParser::parserBody(std::string http_body, InputPacket *pInputPkt)
 {
 	//异常判断
-	if (http_body.empty()) {
+	if (nullptr == pInputPkt || http_body.empty()) 
+	{
 		return RET::SUC;
 	}
 
 	return RET::SUC;
+}
+
+int32_t HttpParser::superMatchInit()
+{
+	std::vector<std::string> pattern;
+	pattern.push_back("ASP.NETSessionid");
+	pattern.push_back("ASPSESSIONID*");
+	pattern.push_back("PHPSESSID");
+	pattern.push_back("SITESER");
+	pattern.push_back("javax.faces.ViewState");
+	pattern.push_back("ViewState");
+	pattern.push_back("sessid");
+	pattern.push_back("jsessionid");
+	if (RET::SUC != super.build(pattern))
+	{
+		return RET::FAIL;
+	}
 }
