@@ -8,13 +8,53 @@ HttpParser::HttpParser()
 HttpParser::~HttpParser()
 {}
 
-//解析器初始化接口
+/** 解析器初始化接口 **/
 int32_t HttpParser::init()
 {
+	//状态机初始化
+	if (RET::SUC != superMatchInit()) {
+		return RET::FAIL;
+	}
+
 	return RET::SUC;
 }
 
-//解析器主入口
+/** 状态机初始化 **/
+int32_t HttpParser::superMatchInit()
+{
+	//读取规则路径
+	std::string cfgFile;
+	if (RET::SUC != Config::getCfg(NS_CONFIG::EM_CFGID_FILTER_CFG_FILE, cfgFile))
+	{
+		std::cout<<"HttpParser: Read cfgfile failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//通用状态机构建
+	if (RET::SUC != super.build(cfgFile, "ALL")) 
+	{
+		std::cout<<"HttpParser: Super init failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//cookie状态机构建
+	if (RET::SUC != cookieSuper.build(cfgFile, "COOKIE"))
+	{
+		std::cout<<"HttpParser: Cookie super init failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	//post状态机构建
+	if (RET::SUC != postSuper.build(cfgFile, "POST"))
+	{
+		std::cout<<"HttpParser: Post super init failed!"<<std::endl;
+		return RET::FAIL;
+	}
+
+	return RET::SUC;
+}
+
+/** 解析器主入口 **/
 int32_t HttpParser::start(InputPacket *pInputPkt)
 {
 	//异常判断
@@ -111,7 +151,7 @@ int32_t HttpParser::start(InputPacket *pInputPkt)
 	return RET::SUC;
 }
 
-//解析uri
+/** 解析uri **/
 int32_t HttpParser::parserUri(std::string uri, InputPacket *pInputPkt)
 {
 	//size为0直接返回
@@ -156,7 +196,7 @@ int32_t HttpParser::parserUri(std::string uri, InputPacket *pInputPkt)
 	return RET::SUC;
 }
 
-//过滤url以分号为分隔符后面的请求数据
+/** 过滤url以分号为分隔符后面的请求数据 **/
 std::string HttpParser::filterUrl(std::string url)
 {
 	uint32_t uPos = url.find(';');
@@ -168,7 +208,7 @@ std::string HttpParser::filterUrl(std::string url)
 	return ret;
 } 
 
-//解析请求行中的Query
+/** 解析请求行中的Query **/
 int32_t HttpParser::parserQuery(InputPacket *pInputPkt)
 {
 	//异常判断
@@ -199,7 +239,7 @@ int32_t HttpParser::parserQuery(InputPacket *pInputPkt)
 		}
 
 		//取key值
-		std::string key = std::string(kv, 0, uPos);
+		key = std::string(kv, 0, uPos);
 
 		//过滤不学习参数
 		if (RET::SUC == super.softFuzzyMatch(key)) {
@@ -207,13 +247,13 @@ int32_t HttpParser::parserQuery(InputPacket *pInputPkt)
 		}
 
 		//取value值
-		std::string value = std::string(kv, uPos + 1);
+		value = std::string(kv, uPos + 1);
 	}
 
 	return RET::SUC;
 }
 
-//解析http请求头cookie体
+/** 解析http请求头cookie体 **/
 int32_t HttpParser::parserCookie(std::string cookie, InputPacket *pInputPkt)
 {
 	//异常判断
@@ -225,7 +265,7 @@ int32_t HttpParser::parserCookie(std::string cookie, InputPacket *pInputPkt)
 	return RET::SUC;
 }
 
-//解析http请求体
+/** 解析http请求体 **/
 int32_t HttpParser::parserBody(std::string http_body, InputPacket *pInputPkt)
 {
 	//异常判断
@@ -235,21 +275,4 @@ int32_t HttpParser::parserBody(std::string http_body, InputPacket *pInputPkt)
 	}
 
 	return RET::SUC;
-}
-
-int32_t HttpParser::superMatchInit()
-{
-	std::vector<std::string> pattern;
-	pattern.push_back("ASP.NETSessionid");
-	pattern.push_back("ASPSESSIONID*");
-	pattern.push_back("PHPSESSID");
-	pattern.push_back("SITESER");
-	pattern.push_back("javax.faces.ViewState");
-	pattern.push_back("ViewState");
-	pattern.push_back("sessid");
-	pattern.push_back("jsessionid");
-	if (RET::SUC != super.build(pattern))
-	{
-		return RET::FAIL;
-	}
 }

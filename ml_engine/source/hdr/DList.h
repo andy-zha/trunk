@@ -11,7 +11,7 @@ class DList
 		/*
 		 * @breif 构造函数
 		 */
-		DList():_dlist_prev(this),_dlist_next(this),_dlist_len(0)
+		DList():_dlist_prev(this), _dlist_next(this), _dlist_len(0)
 		{
 		}
 
@@ -69,7 +69,8 @@ class DList
 		 */
 		int32_t PrevAddNode(DList<Type> *pNewnode, DList<Type> *pCurnode)
 		{
-			if (0 > _dlist_len || nullptr == pNewnode || nullptr == pCurnode)
+			if (0 > _dlist_len || nullptr == pNewnode 
+							|| nullptr == pCurnode || nullptr == pCurnode->_dlist_prev)
 			{
 				return RET::FAIL;
 			}

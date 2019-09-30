@@ -1,8 +1,24 @@
 #ifndef _HASHTABLEMGR_H_
 #define _HASHTABLEMGR_H_
 
+#include "HashNodeBase.h"
 #include "HashTable.h"
 
+#define HASH_MAX_NUM 128
+
+/** 哈希管理器命名空间 **/
+namespace NS_HASHTABLEMGR
+{
+	//哈希业务id注册
+	typedef enum HASH_INDEX
+	{
+		EM_HASH_INDEX_START = -1,                                 //哈希业务下标起始保护接口
+		EM_HASH_LEARNER,                                          //学习缓存哈希表大小
+		EM_HASH_INDEX_END                                         //哈希业务下标结尾保护接口
+	}EM_HASH_INDEX;
+}
+
+/** 哈希管理器类 **/
 class HashTableMgr
 {
 	public:
@@ -62,6 +78,33 @@ class HashTableMgr
 		 */
 		int32_t init();
 
+		/**
+		 * @brief 哈希业务注册接口
+		 *
+		 * @prame uHashIndex 业务下标; uHashSize 哈希大小
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t registerFunc(uint32_t uHashIndex, uint32_t uHashSize);
+
+		/**
+		 * @brief 查找哈希槽结点
+		 *
+		 * @prame uHashIndex 哈希业务下标; uHashKey 哈希值
+		 *
+		 * @return 哈希槽结点指针
+		 */
+		HashSlot<HashNodeBase*> *findHashSlot(uint32_t uHashIndex, uint32_t uHashKey);
+
+		/**
+		 * @brief 查找哈希链
+		 *
+		 * @prame pSlot 槽结点地址; pList 哈希链
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t findHashList(HashSlot<HashNodeBase*> *pSlot, DList<HashNodeBase*> *&pList);
+
 	private:
 		/**
 		 * @brief 构造函数
@@ -73,6 +116,16 @@ class HashTableMgr
 		 * @brief 哈希业务总个数
 		 */
 		uint32_t m_hashNum;
+
+		/**
+		 * @brief 哈希size表
+		 */
+		uint32_t m_hashSize[HASH_MAX_NUM];
+
+		/**
+		 * @brief 哈希表
+		 */
+		HashTable<HashNodeBase*> m_hashTable;
 
 };
 

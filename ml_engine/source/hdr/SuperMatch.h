@@ -4,6 +4,7 @@
 #include "MemoryDefine.h"
 #include "RetCodeDefine.h"
 #include "BinaryTree.h"
+#include "Config.h"
 #include <vector>
 #include <string>
 
@@ -67,6 +68,15 @@ class SuperMatch
 		{
 			_MEM_DEL_(p);
 		}
+
+		/**
+		 * @brief 构建状态机
+		 *
+		 * @prame pattern 所有模式串
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t build(std::string cfgFile, std::string cfgPath);
 
 		/**
 		 * @brief 构建状态机
@@ -168,6 +178,11 @@ class SuperMatch
 		 * @brief 模式树
 		 */
 		BinaryTree<NS_SUPERMATCH::Pattern> m_PatternTree;
+		
+		/**
+		 * @brief 模式总数
+		 */
+		int32_t m_patternTotal;
  
 };
 

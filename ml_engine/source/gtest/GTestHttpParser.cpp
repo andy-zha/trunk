@@ -13,6 +13,12 @@ namespace
 	};
 }	
 
+TEST_F(TestHttpParser, TEST_INIT)
+{
+	HttpParser _Parser;
+	ASSERT_EQ(RET::SUC, _Parser.init());
+}
+
 TEST_F(TestHttpParser, Test_HttpParser)
 {
 	HttpParser _Parser;

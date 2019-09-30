@@ -161,6 +161,17 @@ class HttpParser
 		 * @brief 通用状态机 
 		 */
 		SuperMatch super;
+
+		/**
+		 * @brief post状态机
+		 */
+		SuperMatch postSuper;
+
+		/**
+		 * @brief cookie状态机
+		 */
+		SuperMatch cookieSuper;
+
 };
 
 #endif

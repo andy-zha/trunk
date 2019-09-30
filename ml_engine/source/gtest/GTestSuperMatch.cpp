@@ -51,4 +51,19 @@ TEST_F(TestSuperMatch, TEST_SUPERMATCH)
 	ASSERT_EQ(RET::SUC, super.softSubMatch("GfeD"));
 	ASSERT_EQ(RET::SUC, super.softSubMatch("GfeD"));
 	ASSERT_EQ(RET::SUC, super.softFuzzyMatch("AcDsdsf"));
+
+	//test 规则
+	SuperMatch _super;
+	std::string cfgFile = "../etc/filter.json";
+	std::string cfgPath = "ALL";
+	ASSERT_EQ(RET::SUC, _super.build(cfgFile, cfgPath));
+	ASSERT_EQ(RET::SUC, _super.matchPattern("jsessionid"));
+	ASSERT_EQ(RET::SUC, _super.softMatch("jsessionID"));
+	ASSERT_EQ(RET::SUC, _super.subMatchPattern("jsessi"));
+	ASSERT_EQ(RET::SUC, _super.softFuzzyMatch("jsessionid"));
+	ASSERT_EQ(RET::SUC, _super.softFuzzyMatch("jsessionID"));
+	ASSERT_EQ(RET::FAIL, _super.softFuzzyMatch("jsessionIE"));
+	ASSERT_EQ(RET::FAIL, _super.softFuzzyMatch("jsessionie"));
+	ASSERT_EQ(RET::FAIL, _super.matchPattern("jsessionie"));
+	ASSERT_EQ(RET::FAIL, _super.softMatch("jsessionIE"));
 }

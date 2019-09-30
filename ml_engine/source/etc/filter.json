@@ -1,0 +1,40 @@
+{
+	//所有请求参数均过滤
+	"ALL": {
+		"TOTAL": 8,
+		"1": "ASP.NETSessionid",
+		"2": "ASPSESSIONID*",
+		"3": "PHPSESSID",
+		"4": "SITESER",
+		"5": "javax.faces.ViewState",
+		"6": "ViewState",
+		"7": "sessid",
+		"8": "jsessionid"
+	},
+	//Cookie体过滤参数
+	"COOKIE": {
+		"TOTAL": 13,
+		"1": "cfid",
+		"2": "cftoken",
+		"3": "authenticity_token",
+		"4": "UM_distinctid",
+		"5": "Hm_lvt_*",
+		"6": "Hm_lpvt_*",
+		"7": "BAIDUID",
+		"8": "CNZZDATA*",
+		"9": "_utma",
+		"10": "_utmz",
+		"11": "_utmc",
+		"12": "_utmb",
+		"13": "_utmv"
+	},
+	//Post体过滤参数
+	"POST": {
+		"TOTAL": 5,
+		"1": "_VIEWSTATE",
+		"2": "_EVENTVALIDATION",
+		"3": "_EVENTTARGET",
+		"4": "_EVENTARGUMENT",
+		"5": "_PREVIOUSPAGE"
+	}
+}

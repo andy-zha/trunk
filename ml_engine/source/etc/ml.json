@@ -12,5 +12,10 @@
 	"IPDRULEMGR": {
 		//站点最大阈值
 		"SITE_MAX_NUM" : 128
+	},
+	//公共模块
+	"COMMON": {
+		//正则表达式配置路径
+		"FILTER_CFG_FILE": "../etc/filter.json"
 	}
 }
