@@ -105,6 +105,13 @@ class HttpParser
 	private:
 #endif
 		/**
+		 * @brief supermatch 初始化
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t superMatchInit();
+
+		/**
 		 * @brief 解析uri
 		 *
 		 * @prame uri; pInputPkt 包体 
@@ -148,13 +155,6 @@ class HttpParser
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
 		int32_t parserBody(std::string http_body, InputPacket *pInputPkt);
-
-		/**
-		 * @brief supermatch 初始化
-		 *
-		 * @return RET::SUC 成功; RET::FAIL 失败
-		 */
-		int32_t superMatchInit();
 
 	private:
 		/**
