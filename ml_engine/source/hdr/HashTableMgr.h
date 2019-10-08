@@ -1,7 +1,7 @@
 #ifndef _HASHTABLEMGR_H_
 #define _HASHTABLEMGR_H_
 
-#include "HashNodeBase.h"
+#include "HashNode.h"
 #include "HashTable.h"
 
 #define HASH_MAX_NUM 128
@@ -94,7 +94,7 @@ class HashTableMgr
 		 *
 		 * @return 哈希槽结点指针
 		 */
-		HashSlot<HashNodeBase*> *findHashSlot(uint32_t uHashIndex, uint32_t uHashKey);
+		HashSlot<HashNode> *findHashSlot(uint32_t uHashIndex, uint32_t uHashKey);
 
 		/**
 		 * @brief 查找哈希链
@@ -103,7 +103,7 @@ class HashTableMgr
 		 *
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
-		int32_t findHashList(HashSlot<HashNodeBase*> *pSlot, DList<HashNodeBase*> *&pList);
+		int32_t findHashList(HashSlot<HashNode> *pSlot, DList<HashNode> *&pList);
 
 	private:
 		/**

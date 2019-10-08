@@ -39,13 +39,13 @@ int32_t HashTableMgr::registerFunc(uint32_t uHashIndex, uint32_t uHashSize)
 }
 
 /** 查找哈希槽结点接口 **/
-HashSlot<HashNodeBase*> *HashTableMgr::findHashSlot(uint32_t uHashIndex, uint32_t uHashKey)
+HashSlot<HashNode> *HashTableMgr::findHashSlot(uint32_t uHashIndex, uint32_t uHashKey)
 {
 	return m_hashTable.findHashSlot(uHashIndex, uHashKey);
 }
 
 /** 查找哈希业务链接口 **/
-int32_t HashTableMgr::findHashList(HashSlot<HashNodeBase*> *pSlot, DList<HashNodeBase*> *&pList)
+int32_t HashTableMgr::findHashList(HashSlot<HashNode> *pSlot, DList<HashNode> *&pList)
 {
 	//异常判断，槽空返回失败
 	if (nullptr == pSlot || nullptr == &pSlot->m_hashList) 

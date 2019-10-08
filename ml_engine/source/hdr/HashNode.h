@@ -1,22 +1,22 @@
-#ifndef _HASHNODEBASE_H_
-#define _HASHNODEBASE_H_
+#ifndef _HASHNODE_H_
+#define _HASHNODE_H_
 
 #include "RetCodeDefine.h"
 #include "MemoryDefine.h"
 
-class HashNodeBase
+class HashNode
 {
 	public:
 		/**
 		 * @brief 构造函数
 		 */
-		HashNodeBase()
+		HashNode()
 		{}
 
 		/**
 		 * @brief 析构函数
 		 */
-		virtual ~HashNodeBase()
+		virtual ~HashNode()
 		{}
 
 		/**
