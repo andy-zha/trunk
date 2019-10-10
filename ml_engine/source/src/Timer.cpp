@@ -6,7 +6,7 @@ Timer::Timer()
 Timer::~Timer()
 {}
 
-uint64_t Timer::GetLocalTime()
+uint64_t Timer::getLocalTime()
 {
 	time_t tt;
 	time(&tt);

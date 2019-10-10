@@ -55,7 +55,6 @@ int32_t Processor::start()
 void Processor::process()
 {
 	while (m_run) {
-		std::cout<<"processor"<<std::endl;
 		//规则加载
 		IPDRuleMgr::getInstance().process();
 

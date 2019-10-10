@@ -6,6 +6,7 @@
 #include "InputPacket.h"
 #include "IPDRuleMgr.h"
 #include "SuperMatch.h"
+#include "HashTableMgr.h"
 #include "Timer.h"
 #include "picohttpparser.h"
 #include "StrProc.h"
@@ -34,7 +35,7 @@ namespace NS_HTTPPARSER
 		EM_METHOD_END                      //枚举保护
 	}EM_HTTPMETHOD;
 
-	static const char * const HttpMethod [] = 
+	static const std::string HttpMethod [] = 
 	{
 		"DELETE",
 		"GET",
@@ -155,6 +156,52 @@ class HttpParser
 		 * @return RET::SUC 成功; RET::FAIL 失败
 		 */
 		int32_t parserBody(std::string http_body, InputPacket *pInputPkt);
+
+		/**
+		 * @brief 比较结点信息
+		 *
+		 * @prame pNode 哈希结点; pInputPkt 数据包结点
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败 
+		 */
+		int32_t compareMessage(DList<HashNode> *pNode, InputPacket *pInputPkt);
+
+		/**
+		 * @brief 统计学习方法
+		 *
+		 * @prame pNode 哈希结点; pInputPkt 数据包结点
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败 
+		 */
+		int32_t statisticalMethod(DList<HashNode> *&pNode, InputPacket *pInputPkt);
+
+		/**
+		 * @brief 查询模型状态
+		 *
+		 * @prame pNode 哈希结点; pInputPkt 数据包结点
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败 
+		 */
+		int32_t checkModelStatus();
+
+		/**
+		 * @brief 创建新结点
+		 *
+		 * @prame pNode 哈希链; pInputPkt 数据包结点
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败 
+		 */
+		int32_t createNewNode(DList<HashNode> *&pList, InputPacket *pInputPkt,
+						std::string cookie, std::string http_body);
+
+		/**
+		 * @brief 创建args表
+		 *
+		 * @prame argaTable args表名
+		 *
+		 * @return RET::SUC 成功; RET::FAIL 失败
+		 */
+		int32_t createArgsTable(std::string argsTable);
 
 	private:
 		/**

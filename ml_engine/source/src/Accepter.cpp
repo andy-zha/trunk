@@ -164,7 +164,6 @@ void Accepter::process()
 {
 	while (m_Run)
 	{
-		std::cout<<"accepter"<<std::endl;
 		int32_t iRev = epoll_wait(m_Epfd, env, 32, 30000);
 		switch (iRev)
 		{
@@ -301,7 +300,9 @@ void Accepter::Write(NS_ACCEPTOR::epoll_buf *buf)
 	epoll_ctl(m_Epfd, EPOLL_CTL_DEL, buf->fd, nullptr);
 	close(buf->fd);
 	Free((NS_ACCEPTOR::epoll_buf*)ev.data.ptr);
+	ev.data.ptr = nullptr;
 	Free((NS_ACCEPTOR::epoll_buf*)pEndfree);
+	pEndfree = nullptr;
 }
 
 /** 输出日志接口 **/

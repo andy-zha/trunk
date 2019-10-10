@@ -58,6 +58,7 @@ if (CMAKE_BUILD_TYPE MATCHES DEBUG)
 					${ML_ENGINE_CONSOLE_SRC_FILES})
 	target_link_libraries(ml_engine PRIVATE mysqlclient)
 	target_link_libraries(ml_engine PRIVATE yajl)
+	target_link_libraries(ml_engine PRIVATE pcre)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES RELEASE)
@@ -65,6 +66,7 @@ if (CMAKE_BUILD_TYPE MATCHES RELEASE)
 					${ML_ENGINE_HTTPPARSER_SRC_FILES})
 	target_link_libraries(ml_engine PRIVATE mysqlclient)
 	target_link_libraries(ml_engine PRIVATE yajl)
+	target_link_libraries(ml_engine PRIVATE pcre)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES GTEST)
@@ -75,6 +77,7 @@ if (CMAKE_BUILD_TYPE MATCHES GTEST)
 	target_link_libraries(ml_gtest PRIVATE gtest)
 	target_link_libraries(ml_gtest PRIVATE mysqlclient)
 	target_link_libraries(ml_gtest PRIVATE yajl)
+	target_link_libraries(ml_gtest PRIVATE pcre)
 	target_link_libraries(ml_gtest PRIVATE gcov)
 
 	#执行程序

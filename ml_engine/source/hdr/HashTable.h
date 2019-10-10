@@ -105,9 +105,9 @@ class HashTable
 		 */
 		~HashTable()
 		{
-			if (nullptr != m_hashSize) {
-				delete m_hashSize;
-				m_hashSize = nullptr;
+			if (nullptr != m_hashSlot) {
+				delete m_hashSlot;
+				m_hashSlot = nullptr;
 			}
 		}
 
@@ -141,46 +141,15 @@ class HashTable
 		 *
 		 * return RET::SUC 成功/RET::FAIL 失败
 		 */
-		int32_t hashTableInit(uint32_t uNum, uint32_t *uSize)
+		int32_t hashTableInit(uint32_t uSize)
 		{
-			try {
-				m_hashSize = new uint32_t [uNum];
-			} catch (std::bad_alloc) {
-				return RET::FAIL;
-			}
-
 			try	{
-				m_hashSlot = new HashSlot<T>* [uNum];
+				m_hashSlot = new HashSlot<T> [uSize];
 			} catch(std::bad_alloc) {
-				if (nullptr != m_hashSize) {
-					delete m_hashSize;
-					m_hashSize = nullptr;
-				}
-
 				return RET::FAIL;
 			}
 
-			for (uint32_t uIndex = 0; uIndex < uNum; uIndex++)
-			{
-				try {
-					m_hashSlot[uIndex] = new HashSlot<T> [uSize[uIndex]];
-				} catch (std::bad_alloc) {
-					if (nullptr != m_hashSize) {
-						delete m_hashSize;
-						m_hashSize = nullptr;
-					}
-
-					if (nullptr != m_hashSlot) {
-						delete m_hashSlot;
-						m_hashSlot = nullptr;
-					}
-					
-					return RET::FAIL;
-				}
-				m_hashSize[uIndex] = uSize[uIndex];
-			}
-
-			m_hashNum = uNum;
+			m_hashSize = uSize;
 			return RET::SUC;
 		}
 
@@ -191,33 +160,27 @@ class HashTable
 		 *
 		 * return RET::SUC 成功/RET::FAIL 失败
 		 */
-		HashSlot<T>* findHashSlot(uint32_t uIndex, uint32_t uKey)
+		HashSlot<T>* findHashSlot(uint32_t uKey)
 		{
 			//判断key值是否越界
-			if (uIndex >= m_hashNum || uKey >= m_hashSize[uIndex] 
-					|| nullptr == m_hashSlot || nullptr == m_hashSlot[uIndex])
+			if (uKey >= m_hashSize || nullptr == m_hashSlot)
 			{
 				return nullptr;
 			}
 
-			return &m_hashSlot[uIndex][uKey];
+			return &m_hashSlot[uKey];
 		}
 
 	private:
 		/**
-		 * @brief 哈希表维数
-		 */
-		uint32_t m_hashNum;
-
-		/**
 		 * @brief 哈希槽
 		 */
-		HashSlot<T> **m_hashSlot;
+		HashSlot<T> *m_hashSlot;
 		
 		/**
 		 * @brief 哈希表大小存储
 		 */
-		uint32_t *m_hashSize;
+		uint32_t m_hashSize;
 };
 
 #endif

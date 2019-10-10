@@ -46,7 +46,7 @@ class Timer
  		 * 
  		 * @return 当前时间
  		 */
-		static uint64_t GetLocalTime();
+		static uint64_t getLocalTime();
 };
 
 #endif

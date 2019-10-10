@@ -14,7 +14,8 @@ namespace NS_CONFIG
 		EM_CFGID_SERVER_PORT,               //服务端port
 		EM_CFGID_QUEUE_MAX_SIZE,            //缓冲区最大长度
 		EM_CFGID_SITE_MAX_NUM,              //站点最大数
-		EM_CFGID_FILTER_CFG_FILE,               //正则表达式配置路径
+		EM_CFGID_FILTER_CFG_FILE,           //参数过滤配置路径
+		EM_CFGID_REX_TOTAL,                 //正则表达式总个数
 		EM_CFGID_END                        //枚举保护
 	}EM_CFGID;
 	
@@ -43,6 +44,10 @@ static const NS_CONFIG::CfgInfo g_stCfgInfo[] = {
 	//COMMON
 	//参数过滤规则文件路径
 	{NS_CONFIG::EM_CFGID_FILTER_CFG_FILE, "../etc/ml.json", {"COMMON", "FILTER_CFG_FILE", (const char *)0}},
+
+	//pattern.json
+	//正则总个数
+	{NS_CONFIG::EM_CFGID_REX_TOTAL, "../etc/pattern.json", {"PATTERNMGR", "TOTAL", (const char*)0}},
 };
 
 #endif 
