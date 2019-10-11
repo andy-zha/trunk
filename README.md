@@ -1,8 +1,5 @@
 # trunk
 #
-# @brief utils
-# @description 小工具，主要为一些脚本
-#
 # @brief ml_engine
 # @description 机器学习引擎
 #
